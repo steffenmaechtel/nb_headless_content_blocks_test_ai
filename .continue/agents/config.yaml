@@ -1,0 +1,24 @@
+name: Project Config
+version: 1.0.0
+schema: v1
+models:
+  - name: Deepseek-Coder-v2 16b
+    provider: ollama
+    model: deepseek-coder-v2:16b
+    roles:
+      - chat
+      - edit
+      - apply
+  - name: Qwen2.5-Coder 1.5B
+    provider: ollama
+    model: qwen2.5-coder:1.5b-base
+    roles:
+      - autocomplete
+  - name: Nomic Embed
+    provider: ollama
+    model: nomic-embed-text:latest
+    roles:
+      - embed
+  - name: Autodetect
+    provider: ollama
+    model: AUTODETECT
