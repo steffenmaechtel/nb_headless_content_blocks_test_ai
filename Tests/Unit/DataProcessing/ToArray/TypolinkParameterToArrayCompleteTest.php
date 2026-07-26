@@ -13,27 +13,17 @@ namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray
 
 use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\TypolinkParameterToArray;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Utility\LinkBuilder;
-use TYPO3\Testspace\DummySiteFactory;
-use TYPO3\TestingFramework\Core\IntegrationTestCase;
+use TYPO3\TestingFramework\Unit\Testing\UnitTestCase;
 
-class TypolinkParameterToArrayCompleteTest extends IntegrationTestCase
+class TypolinkParameterToArrayCompleteTest extends UnitTestCase
 {
-    /**
-     * @var DummySiteFactory
-     */
-    protected DummySiteFactory $siteFactory;
-
     protected function setUp(): void
     {
         parent::setUp();
-        $this->siteFactory = GeneralUtility::makeInstance(DummySiteFactory::class);
-        $this->siteFactory->createSite();
     }
 
     protected function tearDown(): void
     {
-        $this->siteFactory->tearDown();
         parent::tearDown();
     }
 
@@ -386,7 +376,7 @@ class TypolinkParameterToArrayCompleteTest extends IntegrationTestCase
     /**
      * @dataProvider dataProviderGetTypoLinkParameters
      */
-    public function testGetTypoLinkParameters(array|resource|null|int|string|float|bool|\stdClass|\DirectoryIterator $input, array $expected): void
+    public function testGetTypoLinkParameters(mixed $input, array $expected): void
     {
         $dataProcessor = GeneralUtility::makeInstance(TypoLinkParameterToArray::class);
         $result = $dataProcessor->getTypoLinkParameters($input);

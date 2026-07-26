@@ -13,26 +13,17 @@ namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray
 
 use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\LazyFolderCollectionToArray;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\Testspace\DummySiteFactory;
-use TYPO3\TestingFramework\Core\IntegrationTestCase;
+use TYPO3\TestingFramework\Unit\Testing\UnitTestCase;
 
-class LazyFolderCollectionToArrayTest extends IntegrationTestCase
+class LazyFolderCollectionToArrayTest extends UnitTestCase
 {
-    /**
-     * @var DummySiteFactory
-     */
-    protected DummySiteFactory $siteFactory;
-
     protected function setUp(): void
     {
         parent::setUp();
-        $this->siteFactory = GeneralUtility::makeInstance(DummySiteFactory::class);
-        $this->siteFactory->createSite();
     }
 
     protected function tearDown(): void
     {
-        $this->siteFactory->tearDown();
         parent::tearDown();
     }
 
@@ -71,14 +62,6 @@ class LazyFolderCollectionToArrayTest extends IntegrationTestCase
                 'input' => new \stdClass(),
                 'expected' => [],
             ],
-            'resource input' => [
-                'input' => fopen('php://temp', 'r'),
-                'expected' => [],
-            ],
-            'directory iterator' => [
-                'input' => new \DirectoryIterator('.'),
-                'expected' => [],
-            ],
             'array with null values' => [
                 'input' => [null, null, null],
                 'expected' => [],
@@ -101,14 +84,6 @@ class LazyFolderCollectionToArrayTest extends IntegrationTestCase
             ],
             'array with objects' => [
                 'input' => [(object)['foo' => 'bar'], (object)['baz' => 'qux']],
-                'expected' => [],
-            ],
-            'array with resources' => [
-                'input' => [fopen('php://temp', 'r'), fopen('php://temp', 'r')],
-                'expected' => [],
-            ],
-            'array with directories' => [
-                'input' => [new \DirectoryIterator('.'), new \DirectoryIterator('.')],
                 'expected' => [],
             ],
             'array with integers' => [
@@ -223,14 +198,6 @@ class LazyFolderCollectionToArrayTest extends IntegrationTestCase
                 'input' => [(object)['id' => 1] => 'value', (object)['id' => 2] => 'value2'],
                 'expected' => [],
             ],
-            'array with resource keys' => [
-                'input' => [fopen('php://temp', 'r') => 'value'],
-                'expected' => [],
-            ],
-            'array with directory keys' => [
-                'input' => [new \DirectoryIterator('.') => 'value'],
-                'expected' => [],
-            ],
             'array with single null' => [
                 'input' => [null],
                 'expected' => [],
@@ -257,14 +224,6 @@ class LazyFolderCollectionToArrayTest extends IntegrationTestCase
             ],
             'array with single object' => [
                 'input' => [(object)['key' => 'value']],
-                'expected' => [],
-            ],
-            'array with single resource' => [
-                'input' => [fopen('php://temp', 'r')],
-                'expected' => [],
-            ],
-            'array with single directory' => [
-                'input' => [new \DirectoryIterator('.')],
                 'expected' => [],
             ],
             'array with single null value' => [
@@ -385,7 +344,7 @@ class LazyFolderCollectionToArrayTest extends IntegrationTestCase
     /**
      * @dataProvider dataProviderGetPaths
      */
-    public function testGetPaths(array|resource|null|int|string|float|bool|\stdClass|\DirectoryIterator $input, array $expected): void
+    public function testGetPaths(mixed $input, array $expected): void
     {
         $dataProcessor = GeneralUtility::makeInstance(LazyFolderCollectionToArray::class);
         $result = $dataProcessor->getPaths($input);

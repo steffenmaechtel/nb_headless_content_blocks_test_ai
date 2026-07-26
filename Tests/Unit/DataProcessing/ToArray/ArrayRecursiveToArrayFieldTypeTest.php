@@ -13,26 +13,17 @@ namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray
 
 use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\ArrayRecursiveToArray;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\Testspace\DummySiteFactory;
-use TYPO3\TestingFramework\Core\IntegrationTestCase;
+use TYPO3\TestingFramework\Unit\Testing\UnitTestCase;
 
-class ArrayRecursiveToArrayFieldTypeTest extends IntegrationTestCase
+class ArrayRecursiveToArrayFieldTypeTest extends UnitTestCase
 {
-    /**
-     * @var DummySiteFactory
-     */
-    protected DummySiteFactory $siteFactory;
-
     protected function setUp(): void
     {
         parent::setUp();
-        $this->siteFactory = GeneralUtility::makeInstance(DummySiteFactory::class);
-        $this->siteFactory->createSite();
     }
 
     protected function tearDown(): void
     {
-        $this->siteFactory->tearDown();
         parent::tearDown();
     }
 
@@ -385,7 +376,7 @@ class ArrayRecursiveToArrayFieldTypeTest extends IntegrationTestCase
     /**
      * @dataProvider dataProviderGetArrayRecursive
      */
-    public function testGetArrayRecursive(array|resource|null|int|string|float|bool|\stdClass|\DirectoryIterator $input, array $expected): void
+    public function testGetArrayRecursive(mixed $input, array $expected): void
     {
         $dataProcessor = GeneralUtility::makeInstance(ArrayRecursiveToArray::class);
         $result = $dataProcessor->getArrayRecursive($input);
