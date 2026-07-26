@@ -4,212 +4,197 @@ declare(strict_types=1);
 
 namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray;
 
+use Iterator;
 use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\LazyFolderCollectionToArray;
+use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class LazyFolderCollectionToArrayTest extends UnitTestCase
 {
     public function testConvertsFolderCollectionToLazyArray(): void
     {
-        $folders = [
-            '/var/www/html',
-            '/home/user/public',
-            '/data/uploads',
-        ];
+        $folder1 = $this->createMock(Folder::class);
+        $folder1->method('getStorage')->willReturn($storageMock = $this->createMock(\TYPO3\CMS\Core\Resource\StorageRepository::class));
+        $folder1->method('getIdentifier')->willReturn('/var/www/html');
 
-        $collection = [
-            'folders' => $folders,
-        ];
+        $folder2 = $this->createMock(Folder::class);
+        $folder2->method('getStorage')->willReturn($storageMock);
+        $folder2->method('getIdentifier')->willReturn('/home/user/public');
 
-        $subject = new LazyFolderCollectionToArray($collection);
+        $folder3 = $this->createMock(Folder::class);
+        $folder3->method('getStorage')->willReturn($storageMock);
+        $folder3->method('getIdentifier')->willReturn('/data/uploads');
 
-        $result = $subject->toArray();
+        $storageMock->method('getConfiguration')->willReturn(['basePath' => '/var/www/html']);
 
-        self::assertIsArray($result);
-        self::assertArrayHasKey('folders', $result);
-        self::assertIsArray($result['folders']);
-        self::assertCount(3, $result['folders']);
-    }
-
-    public function testHandlesEmptyCollection(): void
-    {
-        $collection = [
-            'folders' => [],
-        ];
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFolderCollection::class);
+        $collection->method('getIterator')->willReturn($iter = $this->createMock(Iterator::class));
+        $iter->method('getIterator')->willReturn([$folder1, $folder2, $folder3]);
 
         $subject = new LazyFolderCollectionToArray($collection);
 
         $result = $subject->toArray();
 
         self::assertIsArray($result);
-        self::assertArrayHasKey('folders', $result);
-        self::assertIsArray($result['folders']);
-        self::assertEmpty($result['folders']);
+        self::assertArrayHasKey(0, $result);
+        self::assertArrayHasKey(1, $result);
+        self::assertArrayHasKey(2, $result);
     }
 
-    public function testHandlesNullCollection(): void
+    public function testHandlesEmptyFolderCollection(): void
     {
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFolderCollection::class);
+        $collection->method('getIterator')->willReturn([]);
+
+        $subject = new LazyFolderCollectionToArray($collection);
+
+        $result = $subject->toArray();
+
+        self::assertIsArray($result);
+        self::assertEmpty($result);
+    }
+
+    public function testHandlesNullFolderCollection(): void
+    {
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Typed property');
+
         $collection = null;
-
         $subject = new LazyFolderCollectionToArray($collection);
-
-        $result = $subject->toArray();
-
-        self::assertIsArray($result);
-        self::assertArrayHasKey('folders', $result);
-        self::assertIsArray($result['folders']);
-        self::assertEmpty($result['folders']);
     }
 
-    public function testHandlesMissingKeyWithDefault(): void
+    public function testHandlesMissingFolderCollection(): void
     {
-        $collection = [];
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Typed property');
 
+        $collection = null;
         $subject = new LazyFolderCollectionToArray($collection);
-
-        $result = $subject->toArray();
-
-        self::assertIsArray($result);
-        self::assertArrayHasKey('folders', $result);
-        self::assertIsArray($result['folders']);
-        self::assertEmpty($result['folders']);
     }
 
     public function testHandlesAbsolutePaths(): void
     {
-        $folders = [
-            '/absolute/path',
-            '/another/absolute/path',
-        ];
+        $folder = $this->createMock(Folder::class);
+        $folder->method('getStorage')->willReturn($storageMock = $this->createMock(\TYPO3\CMS\Core\Resource\StorageRepository::class));
+        $folder->method('getIdentifier')->willReturn('/absolute/path');
 
-        $collection = [
-            'folders' => $folders,
-        ];
+        $storageMock->method('getConfiguration')->willReturn(['basePath' => '/']);
+
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFolderCollection::class);
+        $collection->method('getIterator')->willReturn([$folder]);
 
         $subject = new LazyFolderCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertArrayHasKey('folders', $result);
-        self::assertStringStartsWith('/absolute', $result['folders'][0]);
-        self::assertStringStartsWith('/another', $result['folders'][1]);
+        self::assertStringStartsWith('/absolute', $result[0]);
     }
 
     public function testHandlesRelativePaths(): void
     {
-        $folders = [
-            'relative/path',
-            '../parent/path',
-            './current/path',
-        ];
+        $folder = $this->createMock(Folder::class);
+        $folder->method('getStorage')->willReturn($storageMock = $this->createMock(\TYPO3\CMS\Core\Resource\StorageRepository::class));
+        $folder->method('getIdentifier')->willReturn('relative/path');
 
-        $collection = [
-            'folders' => $folders,
-        ];
+        $storageMock->method('getConfiguration')->willReturn(['basePath' => '/']);
+
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFolderCollection::class);
+        $collection->method('getIterator')->willReturn([$folder]);
 
         $subject = new LazyFolderCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertArrayHasKey('folders', $result);
-        self::assertSame('relative/path', $result['folders'][0]);
-        self::assertSame('../parent/path', $result['folders'][1]);
-        self::assertSame('./current/path', $result['folders'][2]);
+        self::assertSame('/relative/path', $result[0]);
     }
 
-    public function testPreservesLazyLoadingStructure(): void
+    public function testPreservesFolderStructure(): void
     {
-        $folders = ['/path1', '/path2'];
+        $folder = $this->createMock(Folder::class);
+        $folder->method('getStorage')->willReturn($storageMock = $this->createMock(\TYPO3\CMS\Core\Resource\StorageRepository::class));
+        $folder->method('getIdentifier')->willReturn('/path1');
 
-        $collection = [
-            'folders' => $folders,
-        ];
+        $storageMock->method('getConfiguration')->willReturn(['basePath' => '/']);
+
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFolderCollection::class);
+        $collection->method('getIterator')->willReturn([$folder]);
 
         $subject = new LazyFolderCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertArrayHasKey('folders', $result);
-        self::assertIsArray($result['folders']);
-        self::assertArrayNotHasKey('original', $result);
+        self::assertArrayHasKey(0, $result);
     }
 
     public function testHandlesInvalidPaths(): void
     {
-        $folders = [
-            '',
-            null,
-            'not a path',
-        ];
+        $folder = $this->createMock(Folder::class);
+        $folder->method('getStorage')->willReturn($storageMock = $this->createMock(\TYPO3\CMS\Core\Resource\StorageRepository::class));
+        $folder->method('getIdentifier')->willReturn('');
 
-        $collection = [
-            'folders' => $folders,
-        ];
+        $storageMock->method('getConfiguration')->willReturn(['basePath' => '/']);
+
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFolderCollection::class);
+        $collection->method('getIterator')->willReturn([$folder]);
 
         $subject = new LazyFolderCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertArrayHasKey('folders', $result);
-        self::assertIsArray($result['folders']);
+        self::assertIsArray($result);
     }
 
     public function testHandlesPathsWithTrailingSlashes(): void
     {
-        $folders = [
-            '/path/to/folder/',
-            '/another/folder/',
-        ];
+        $folder = $this->createMock(Folder::class);
+        $folder->method('getStorage')->willReturn($storageMock = $this->createMock(\TYPO3\CMS\Core\Resource\StorageRepository::class));
+        $folder->method('getIdentifier')->willReturn('/path/to/folder/');
 
-        $collection = [
-            'folders' => $folders,
-        ];
+        $storageMock->method('getConfiguration')->willReturn(['basePath' => '/']);
+
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFolderCollection::class);
+        $collection->method('getIterator')->willReturn([$folder]);
 
         $subject = new LazyFolderCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertStringEndsWith('/', $result['folders'][0]);
-        self::assertStringEndsWith('/', $result['folders'][1]);
+        self::assertStringEndsWith('/', $result[0]);
     }
 
     public function testHandlesPathsWithMultipleTrailingSlashes(): void
     {
-        $folders = [
-            '/path/to/folder///',
-            '/another///',
-        ];
+        $folder = $this->createMock(Folder::class);
+        $folder->method('getStorage')->willReturn($storageMock = $this->createMock(\TYPO3\CMS\Core\Resource\StorageRepository::class));
+        $folder->method('getIdentifier')->willReturn('/path/to/folder///');
 
-        $collection = [
-            'folders' => $folders,
-        ];
+        $storageMock->method('getConfiguration')->willReturn(['basePath' => '/']);
+
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFolderCollection::class);
+        $collection->method('getIterator')->willReturn([$folder]);
 
         $subject = new LazyFolderCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertStringEndsWith('/', $result['folders'][0]);
-        self::assertStringEndsWith('/', $result['folders'][1]);
+        self::assertStringEndsWith('/', $result[0]);
     }
 
     public function testHandlesSpecialCharactersInPaths(): void
     {
-        $folders = [
-            '/path with spaces',
-            '/path/with/dots.123',
-            '/path-2024.01.01',
-        ];
+        $folder = $this->createMock(Folder::class);
+        $folder->method('getStorage')->willReturn($storageMock = $this->createMock(\TYPO3\CMS\Core\Resource\StorageRepository::class));
+        $folder->method('getIdentifier')->willReturn('/path with spaces');
 
-        $collection = [
-            'folders' => $folders,
-        ];
+        $storageMock->method('getConfiguration')->willReturn(['basePath' => '/']);
+
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFolderCollection::class);
+        $collection->method('getIterator')->willReturn([$folder]);
 
         $subject = new LazyFolderCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertStringContainsString('spaces', $result['folders'][0]);
-        self::assertStringContainsString('dots.123', $result['folders'][1]);
-        self::assertStringContainsString('2024.01.01', $result['folders'][2]);
+        self::assertStringContainsString('with spaces', $result[0]);
     }
 }

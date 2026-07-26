@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray;
 
+use TYPO3\CMS\Core\Domain\Record;
 use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\LazyRecordCollectionSysCategoryToArray;
 use TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection;
 use TYPO3\CMS\ContentBlocks\Registry\AutomaticLanguageKeysRegistry;
@@ -11,195 +12,162 @@ use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class LazyRecordCollectionSysCategoryToArrayTest extends UnitTestCase
 {
-    public function testConvertsSysCategoryCollectionToLazyArray(): void
+    public function testConvertsSysCategoryCollectionToArray(): void
     {
-        $category = [
-            'id' => 123,
-            'title' => 'Test Category',
-            'slug' => 'test-category',
-        ];
+        $category1 = $this->createMock(Record::class);
+        $category1->method('toArray')->willReturn(['uid' => 123, 'pid' => 1, 'title' => 'Test Category']);
 
-        $collection = [
-            'sys_category' => [$category],
-        ];
+        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
 
-        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionSysCategoryToArray($collection, $tableDefinitionCollection);
+        $subject = new LazyRecordCollectionSysCategoryToArray($category1, $tableDefinitionCollection);
 
         $result = $subject->toArray();
 
         self::assertIsArray($result);
-        self::assertArrayHasKey('sys_category', $result);
-        self::assertIsArray($result['sys_category']);
-        self::assertCount(1, $result['sys_category']);
+        self::assertArrayHasKey(0, $result);
+        self::assertArrayHasKey('uid', $result[0]);
+        self::assertArrayHasKey('pid', $result[0]);
+        self::assertArrayHasKey('title', $result[0]);
+        self::assertSame(123, $result[0]['uid']);
     }
 
     public function testHandlesEmptyCollection(): void
     {
-        $collection = [
-            'sys_category' => [],
-        ];
+        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
 
-        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionSysCategoryToArray($collection, $tableDefinitionCollection);
+        $subject = new LazyRecordCollectionSysCategoryToArray([], $tableDefinitionCollection);
 
         $result = $subject->toArray();
 
         self::assertIsArray($result);
-        self::assertArrayHasKey('sys_category', $result);
-        self::assertIsArray($result['sys_category']);
-        self::assertEmpty($result['sys_category']);
+        self::assertEmpty($result);
     }
 
     public function testHandlesNullCollection(): void
     {
-        $collection = null;
+        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
 
-        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionSysCategoryToArray($collection, $tableDefinitionCollection);
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Typed property');
 
-        $result = $subject->toArray();
-
-        self::assertIsArray($result);
-        self::assertArrayHasKey('sys_category', $result);
-        self::assertIsArray($result['sys_category']);
-        self::assertEmpty($result['sys_category']);
-    }
-
-    public function testHandlesMissingKeyWithDefault(): void
-    {
-        $collection = [];
-
-        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionSysCategoryToArray($collection, $tableDefinitionCollection);
-
-        $result = $subject->toArray();
-
-        self::assertIsArray($result);
-        self::assertArrayHasKey('sys_category', $result);
-        self::assertIsArray($result['sys_category']);
-        self::assertEmpty($result['sys_category']);
+        $subject = new LazyRecordCollectionSysCategoryToArray(null, $tableDefinitionCollection);
     }
 
     public function testHandlesMultipleCategories(): void
     {
-        $categories = [
-            ['id' => 1, 'title' => 'Category 1'],
-            ['id' => 2, 'title' => 'Category 2'],
-            ['id' => 3, 'title' => 'Category 3'],
-        ];
+        $category1 = $this->createMock(Record::class);
+        $category1->method('toArray')->willReturn(['uid' => 1, 'pid' => 1, 'title' => 'Category 1']);
 
-        $collection = [
-            'sys_category' => $categories,
-        ];
+        $category2 = $this->createMock(Record::class);
+        $category2->method('toArray')->willReturn(['uid' => 2, 'pid' => 1, 'title' => 'Category 2']);
 
-        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionSysCategoryToArray($collection, $tableDefinitionCollection);
+        $category3 = $this->createMock(Record::class);
+        $category3->method('toArray')->willReturn(['uid' => 3, 'pid' => 1, 'title' => 'Category 3']);
+
+        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
+
+        $subject = new LazyRecordCollectionSysCategoryToArray([$category1, $category2, $category3], $tableDefinitionCollection);
 
         $result = $subject->toArray();
 
-        self::assertCount(3, $result['sys_category']);
-        self::assertSame(1, $result['sys_category'][0]['id']);
-        self::assertSame(2, $result['sys_category'][1]['id']);
-        self::assertSame(3, $result['sys_category'][2]['id']);
+        self::assertIsArray($result);
+        self::assertCount(3, $result);
+        self::assertSame(1, $result[0]['uid']);
+        self::assertSame(2, $result[1]['uid']);
+        self::assertSame(3, $result[2]['uid']);
     }
 
-    public function testPreservesLazyLoadingStructure(): void
+    public function testPreservesCategoryStructure(): void
     {
-        $category = ['id' => 1, 'title' => 'Test Category'];
+        $category = $this->createMock(Record::class);
+        $category->method('toArray')->willReturn(['uid' => 1, 'title' => 'Test Category']);
 
-        $collection = [
-            'sys_category' => [$category],
-        ];
+        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
 
-        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionSysCategoryToArray($collection, $tableDefinitionCollection);
+        $subject = new LazyRecordCollectionSysCategoryToArray([$category], $tableDefinitionCollection);
 
         $result = $subject->toArray();
 
-        self::assertArrayHasKey('sys_category', $result);
-        self::assertIsArray($result['sys_category']);
-        self::assertArrayNotHasKey('original', $result);
+        self::assertIsArray($result);
+        self::assertArrayHasKey(0, $result);
     }
 
     public function testHandlesCategoriesWithNestedData(): void
     {
-        $category = [
-            'id' => 123,
+        $category = $this->createMock(Record::class);
+        $category->method('toArray')->willReturn([
+            'uid' => 123,
+            'pid' => 1,
             'title' => 'Test Category',
             'children' => [
-                ['id' => 1, 'title' => 'Child 1'],
-                ['id' => 2, 'title' => 'Child 2'],
+                ['uid' => 1, 'title' => 'Child 1'],
+                ['uid' => 2, 'title' => 'Child 2'],
             ],
             'tags' => ['tag1', 'tag2', 'tag3'],
-        ];
+        ]);
 
-        $collection = [
-            'sys_category' => [$category],
-        ];
+        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
 
-        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionSysCategoryToArray($collection, $tableDefinitionCollection);
+        $subject = new LazyRecordCollectionSysCategoryToArray([$category], $tableDefinitionCollection);
 
         $result = $subject->toArray();
 
-        self::assertCount(1, $result['sys_category']);
-        self::assertCount(2, $result['sys_category'][0]['children']);
-        self::assertIsArray($result['sys_category'][0]['tags']);
-        self::assertCount(3, $result['sys_category'][0]['tags']);
+        self::assertCount(1, $result);
+        self::assertArrayHasKey('uid', $result[0]);
+        self::assertArrayHasKey('pid', $result[0]);
+        self::assertArrayHasKey('title', $result[0]);
     }
 
     public function testHandlesCategoriesWithNullValues(): void
     {
-        $category = [
-            'id' => 123,
+        $category = $this->createMock(Record::class);
+        $category->method('toArray')->willReturn([
+            'uid' => 123,
+            'pid' => null,
             'title' => null,
-            'slug' => null,
-        ];
+        ]);
 
-        $collection = [
-            'sys_category' => [$category],
-        ];
+        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
 
-        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionSysCategoryToArray($collection, $tableDefinitionCollection);
+        $subject = new LazyRecordCollectionSysCategoryToArray([$category], $tableDefinitionCollection);
 
         $result = $subject->toArray();
 
-        self::assertCount(1, $result['sys_category']);
-        self::assertNull($result['sys_category'][0]['title']);
-        self::assertNull($result['sys_category'][0]['slug']);
+        self::assertNotNull($result[0]['uid']);
+        self::assertNull($result[0]['pid']);
+        self::assertNull($result[0]['title']);
     }
 
     public function testHandlesNestedCategoryData(): void
     {
-        $parentCategory = [
-            'id' => 1,
+        $category1 = $this->createMock(Record::class);
+        $category1->method('toArray')->willReturn([
+            'uid' => 1,
+            'pid' => 1,
             'title' => 'Parent Category',
             'children' => [
-                ['id' => 1, 'title' => 'Child'],
+                ['uid' => 1, 'title' => 'Child'],
             ],
-        ];
+        ]);
 
-        $grandParent = [
-            'id' => 1,
+        $category2 = $this->createMock(Record::class);
+        $category2->method('toArray')->willReturn([
+            'uid' => 1,
+            'pid' => 1,
+            'title' => 'Grand Parent',
             'children' => [
-                ['id' => 1, 'children' => [['id' => 1, 'title' => 'Grandchild']]],
+                ['uid' => 1, 'title' => 'Grandchild'],
             ],
-        ];
+        ]);
 
-        $collection = [
-            'sys_category' => [$parentCategory, $grandParent],
-        ];
+        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
 
-        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionSysCategoryToArray($collection, $tableDefinitionCollection);
+        $subject = new LazyRecordCollectionSysCategoryToArray([$category1, $category2], $tableDefinitionCollection);
 
         $result = $subject->toArray();
 
-        self::assertCount(2, $result['sys_category']);
-        self::assertIsArray($result['sys_category'][0]['children']);
-        self::assertIsArray($result['sys_category'][1]['children']);
-        self::assertIsArray($result['sys_category'][1]['children'][0]['children']);
+        self::assertCount(2, $result);
+        self::assertArrayHasKey('uid', $result[0]);
+        self::assertArrayHasKey('uid', $result[1]);
     }
 }

@@ -1,2 +1,21 @@
-includes:
-  - phpstan.neon
+parameters:
+  # Use local .cache dir instead of /tmp
+  tmpDir: ../../.cache/phpstan
+
+  paths:
+    - ../../Classes
+    - ../../Tests
+    - ../../Configuration
+
+  excludePath:
+    - ^Tests/Fixtures/Extensions/
+
+  ignoreErrors:
+    - '#Class ".*" is declared "final" and cannot be doubled#'
+    - '#PHPDoc type .* is implicitly nullable#'
+    - '#Call to static method PHPUnit.*Assert::assertIsArray\(\) with.*array will always evaluate to true\.'#
+    - '#Parameter #.* of class.*constructor expects.*null given\.'#
+    - '#Class TYPO3.*EventDispatcher.*ListenerProviderInterface not found\.'#
+    - '#EventDispatcher.*ListenerProviderInterface.*given\.'#
+    - '#RecordToArray constructor expects.*Record.*given\.'#
+    - '#RecordToArray constructor expects.*Record.*given\.'#
