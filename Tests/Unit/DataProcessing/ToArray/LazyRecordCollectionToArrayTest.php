@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray;
 
 use Iterator;
+use AutomaticLanguageKeysRegistry;
 use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\LazyRecordCollectionToArray;
-use TYPO3\CMS\ContentBlocks\Definition\TableDefinition;
 use TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection;
 use TYPO3\CMS\Core\Collection\LazyRecordCollection;
 use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
@@ -18,18 +18,17 @@ final class LazyRecordCollectionToArrayTest extends UnitTestCase
     public function testConvertsLazyRecordCollectionToArray(): void
     {
         $lazyRecordCollection = $this->createMock(LazyRecordCollection::class);
-        $lazyRecordCollection->method('getIterator')->willReturn([
-            0 => ['uid' => 1, 'title' => 'Record 1'],
-            1 => ['uid' => 2, 'title' => 'Record 2'],
-        ]);
+        $lazyRecordCollection->method('getIterator')->willReturn(new \ArrayIterator([
+            ['uid' => 1, 'title' => 'Record 1'],
+            ['uid' => 2, 'title' => 'Record 2'],
+        ]));
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
-        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
+        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
 
         $subject = new LazyRecordCollectionToArray(
             $lazyRecordCollection,
-            $tableDefinition,
+            null,
             $tableDefinitionCollection,
             $eventDispatcher
         );
@@ -43,19 +42,18 @@ final class LazyRecordCollectionToArrayTest extends UnitTestCase
     public function testConvertsMultipleLazyRecordCollectionsToArray(): void
     {
         $lazyRecordCollection = $this->createMock(LazyRecordCollection::class);
-        $lazyRecordCollection->method('getIterator')->willReturn([
-            0 => ['uid' => 1, 'title' => 'Record 1'],
-            1 => ['uid' => 2, 'title' => 'Record 2'],
-            2 => ['uid' => 3, 'title' => 'Record 3'],
-        ]);
+        $lazyRecordCollection->method('getIterator')->willReturn(new \ArrayIterator([
+            ['uid' => 1, 'title' => 'Record 1'],
+            ['uid' => 2, 'title' => 'Record 2'],
+            ['uid' => 3, 'title' => 'Record 3'],
+        ]));
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
-        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
+        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
 
         $subject = new LazyRecordCollectionToArray(
             $lazyRecordCollection,
-            $tableDefinition,
+            null,
             $tableDefinitionCollection,
             $eventDispatcher
         );
@@ -70,15 +68,14 @@ final class LazyRecordCollectionToArrayTest extends UnitTestCase
     public function testHandlesEmptyLazyRecordCollection(): void
     {
         $lazyRecordCollection = $this->createMock(LazyRecordCollection::class);
-        $lazyRecordCollection->method('getIterator')->willReturn([]);
+        $lazyRecordCollection->method('getIterator')->willReturn(new \ArrayIterator([]));
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
-        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
+        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
 
         $subject = new LazyRecordCollectionToArray(
             $lazyRecordCollection,
-            $tableDefinition,
+            null,
             $tableDefinitionCollection,
             $eventDispatcher
         );

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray;
 
 use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\RecordToArray;
-use TYPO3\CMS\ContentBlocks\Definition\TableDefinition;
 use TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection;
 use TYPO3\CMS\ContentBlocks\Registry\AutomaticLanguageKeysRegistry;
 use TYPO3\CMS\Core\Domain\Record;
@@ -24,7 +23,6 @@ final class RecordToArrayTest extends UnitTestCase
             'created' => '2026-01-01 00:00:00',
         ];
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
 
@@ -35,7 +33,7 @@ final class RecordToArrayTest extends UnitTestCase
 
         $record->method('toArray')->willReturn($recordData);
 
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
+        $subject = new RecordToArray($record, null, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
         self::assertArrayHasKey('uid', $result);
@@ -58,7 +56,6 @@ final class RecordToArrayTest extends UnitTestCase
             'title' => 'Test',
         ];
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
 
@@ -69,7 +66,7 @@ final class RecordToArrayTest extends UnitTestCase
 
         $record->method('toArray')->willReturn($recordData);
 
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
+        $subject = new RecordToArray($record, null, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
         self::assertArrayNotHasKey('uid', $result);
@@ -90,7 +87,6 @@ final class RecordToArrayTest extends UnitTestCase
             'created' => '2026-01-01 00:00:00',
         ];
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
 
@@ -101,7 +97,7 @@ final class RecordToArrayTest extends UnitTestCase
 
         $record->method('toArray')->willReturn($recordData);
 
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
+        $subject = new RecordToArray($record, null, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
         self::assertNull($result['title']);
@@ -119,7 +115,6 @@ final class RecordToArrayTest extends UnitTestCase
             ],
         ];
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
 
@@ -130,7 +125,7 @@ final class RecordToArrayTest extends UnitTestCase
 
         $record->method('toArray')->willReturn($recordData);
 
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
+        $subject = new RecordToArray($record, null, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
         self::assertArrayHasKey('config', $result);
@@ -147,7 +142,6 @@ final class RecordToArrayTest extends UnitTestCase
             'modified' => '2026-01-02 00:00:00',
         ];
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
 
@@ -158,7 +152,7 @@ final class RecordToArrayTest extends UnitTestCase
 
         $record->method('toArray')->willReturn($recordData);
 
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
+        $subject = new RecordToArray($record, null, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
         self::assertIsString($result['created']);
@@ -171,7 +165,6 @@ final class RecordToArrayTest extends UnitTestCase
             'uid' => 123,
         ];
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
 
@@ -182,7 +175,7 @@ final class RecordToArrayTest extends UnitTestCase
 
         $record->method('toArray')->willReturn($recordData);
 
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
+        $subject = new RecordToArray($record, null, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
         self::assertEquals(['uid' => 123], $result);
@@ -198,7 +191,6 @@ final class RecordToArrayTest extends UnitTestCase
             'tags' => [],
         ];
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
 
@@ -209,7 +201,7 @@ final class RecordToArrayTest extends UnitTestCase
 
         $record->method('toArray')->willReturn($recordData);
 
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
+        $subject = new RecordToArray($record, null, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
         self::assertTrue($result['isActive']);
