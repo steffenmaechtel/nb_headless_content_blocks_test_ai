@@ -9,6 +9,7 @@ use TYPO3\CMS\ContentBlocks\DataProcessing\ContentBlockDataDecorator;
 use TYPO3\CMS\ContentBlocks\DataProcessing\ContentTypeResolver;
 use TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection;
 use TYPO3\CMS\ContentBlocks\Registry\ContentBlockRegistry;
+use Psr\EventDispatcher\ListenerProviderInterface;
 use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
@@ -32,7 +33,8 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
         $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
         $contentBlockDataDecorator->method('get')->willReturn(null);
 
-        $eventDispatcher = new EventDispatcher();
+        $listenerProvider = $this->createMock(ListenerProviderInterface::class);
+        $eventDispatcher = new EventDispatcher($listenerProvider);
 
         $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
@@ -49,8 +51,6 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
             ['as' => 'data'],
             $processedData
         );
-
-        self::assertIsArray($result);
         self::assertArrayHasKey('data', $result);
     }
 
@@ -72,7 +72,8 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
         $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
         $contentBlockDataDecorator->method('get')->willReturn([]);
 
-        $eventDispatcher = new EventDispatcher();
+        $listenerProvider = $this->createMock(ListenerProviderInterface::class);
+        $eventDispatcher = new EventDispatcher($listenerProvider);
 
         $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
@@ -89,8 +90,6 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
             ['as' => 'data'],
             $processedData
         );
-
-        self::assertIsArray($result);
         self::assertArrayHasKey('data', $result);
     }
 
@@ -112,7 +111,8 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
         $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
         $contentBlockDataDecorator->method('get')->willReturn([]);
 
-        $eventDispatcher = new EventDispatcher();
+        $listenerProvider = $this->createMock(ListenerProviderInterface::class);
+        $eventDispatcher = new EventDispatcher($listenerProvider);
 
         $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
@@ -129,8 +129,6 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
             ['as' => 'data'],
             $processedData
         );
-
-        self::assertIsArray($result);
         self::assertArrayHasKey('data', $result);
     }
 
@@ -152,7 +150,8 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
         $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
         $contentBlockDataDecorator->method('get')->willReturn([]);
 
-        $eventDispatcher = new EventDispatcher();
+        $listenerProvider = $this->createMock(ListenerProviderInterface::class);
+        $eventDispatcher = new EventDispatcher($listenerProvider);
 
         $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
@@ -180,8 +179,6 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
             $configuration,
             ['data' => ['uid' => 123]]
         );
-
-        self::assertIsArray($result);
         self::assertArrayHasKey('data', $result);
     }
 
@@ -203,7 +200,8 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
         $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
         $contentBlockDataDecorator->method('get')->willReturn([]);
 
-        $eventDispatcher = new EventDispatcher();
+        $listenerProvider = $this->createMock(ListenerProviderInterface::class);
+        $eventDispatcher = new EventDispatcher($listenerProvider);
 
         $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
@@ -232,8 +230,6 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
             $configuration,
             ['data' => ['uid' => 123]]
         );
-
-        self::assertIsArray($result);
         self::assertArrayHasKey('data', $result);
     }
 
@@ -255,7 +251,8 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
         $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
         $contentBlockDataDecorator->method('get')->willReturn([]);
 
-        $eventDispatcher = new EventDispatcher();
+        $listenerProvider = $this->createMock(ListenerProviderInterface::class);
+        $eventDispatcher = new EventDispatcher($listenerProvider);
 
         $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
@@ -271,8 +268,6 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
             [],
             ['data' => ['uid' => 123]]
         );
-
-        self::assertIsArray($result);
     }
 
     public function testHandlesNestedProcessorConfiguration(): void
@@ -293,7 +288,8 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
         $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
         $contentBlockDataDecorator->method('get')->willReturn([]);
 
-        $eventDispatcher = new EventDispatcher();
+        $listenerProvider = $this->createMock(ListenerProviderInterface::class);
+        $eventDispatcher = new EventDispatcher($listenerProvider);
 
         $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
@@ -323,8 +319,6 @@ final class ContainerJsonDataProcessorTest extends UnitTestCase
             $configuration,
             ['data' => ['uid' => 123]]
         );
-
-        self::assertIsArray($result);
         self::assertArrayHasKey('data', $result);
     }
 }

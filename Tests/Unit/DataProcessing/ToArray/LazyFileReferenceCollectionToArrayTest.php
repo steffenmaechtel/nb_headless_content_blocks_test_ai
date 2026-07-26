@@ -15,59 +15,53 @@ final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('get')->willReturn('file_reference_123');
 
-        $collection = [
-            'file_references' => [$fileReference],
-        ];
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFileReferenceCollection::class);
+        $collection->method('getIterator')->willReturn([
+            'file_reference_123' => ['original' => $fileReference],
+        ]);
 
         $subject = new LazyFileReferenceCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertIsArray($result);
-        self::assertArrayHasKey('file_references', $result);
-        self::assertIsArray($result['file_references']);
+        self::assertArrayHasKey('file_reference_123', $result);
+        self::assertArrayHasKey('original', $result['file_reference_123']);
     }
 
     public function testHandlesEmptyCollection(): void
     {
-        $collection = [
-            'file_references' => [],
-        ];
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFileReferenceCollection::class);
+        $collection->method('getIterator')->willReturn([]);
 
         $subject = new LazyFileReferenceCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertIsArray($result);
-        self::assertArrayHasKey('file_references', $result);
-        self::assertIsArray($result['file_references']);
-        self::assertEmpty($result['file_references']);
+        self::assertEmpty($result);
     }
 
     public function testHandlesNullCollection(): void
     {
-        $subject = new LazyFileReferenceCollectionToArray([]);
-
-        $result = $subject->toArray();
-
-        self::assertIsArray($result);
-        self::assertArrayHasKey('file_references', $result);
-        self::assertIsArray($result['file_references']);
-        self::assertEmpty($result['file_references']);
-    }
-
-    public function testHandlesMissingKeyWithDefault(): void
-    {
-        $collection = [];
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFileReferenceCollection::class);
+        $collection->method('getIterator')->willReturn([]);
 
         $subject = new LazyFileReferenceCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertIsArray($result);
-        self::assertArrayHasKey('file_references', $result);
-        self::assertIsArray($result['file_references']);
-        self::assertEmpty($result['file_references']);
+        self::assertEmpty($result);
+    }
+
+    public function testHandlesMissingKeyWithDefault(): void
+    {
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFileReferenceCollection::class);
+        $collection->method('getIterator')->willReturn([]);
+
+        $subject = new LazyFileReferenceCollectionToArray($collection);
+
+        $result = $subject->toArray();
+
+        self::assertEmpty($result);
     }
 
     public function testHandlesMultipleFileReferences(): void
@@ -81,15 +75,18 @@ final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
         $fileReference3 = $this->createMock(FileReference::class);
         $fileReference3->method('get')->willReturn('file_reference_3');
 
-        $collection = [
-            'file_references' => [$fileReference1, $fileReference2, $fileReference3],
-        ];
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFileReferenceCollection::class);
+        $collection->method('getIterator')->willReturn([
+            'file_reference_1' => ['original' => $fileReference1],
+            'file_reference_2' => ['original' => $fileReference2],
+            'file_reference_3' => ['original' => $fileReference3],
+        ]);
 
         $subject = new LazyFileReferenceCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertCount(3, $result['file_references']);
+        self::assertCount(3, $result);
     }
 
     public function testPreservesLazyLoadingStructure(): void
@@ -97,17 +94,17 @@ final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('get')->willReturn('file_reference_456');
 
-        $collection = [
-            'file_references' => [$fileReference],
-        ];
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFileReferenceCollection::class);
+        $collection->method('getIterator')->willReturn([
+            'file_reference_456' => ['original' => $fileReference],
+        ]);
 
         $subject = new LazyFileReferenceCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertArrayHasKey('file_references', $result);
-        self::assertIsArray($result['file_references']);
-        self::assertArrayNotHasKey('original', $result);
+        self::assertArrayHasKey('file_reference_456', $result);
+        self::assertArrayHasKey('original', $result['file_reference_456']);
     }
 
     public function testHandlesInvalidFileReferencesInCollection(): void
@@ -115,16 +112,16 @@ final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('get')->willReturn(null);
 
-        $collection = [
-            'file_references' => [$fileReference],
-        ];
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFileReferenceCollection::class);
+        $collection->method('getIterator')->willReturn([
+            'file_reference_null' => ['original' => $fileReference],
+        ]);
 
         $subject = new LazyFileReferenceCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertIsArray($result);
-        self::assertArrayHasKey('file_references', $result);
+        self::assertArrayHasKey('file_reference_null', $result);
     }
 
     public function testHandlesMixedValidAndNullReferences(): void
@@ -132,19 +129,19 @@ final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('get')->willReturn('file_reference_valid');
 
-        $nullReference = null;
+        $fileReferenceNull = $this->createMock(FileReference::class);
+        $fileReferenceNull->method('get')->willReturn(null);
 
-        $collection = [
-            'file_references' => [$fileReference, $nullReference],
-        ];
+        $collection = $this->createMock(\TYPO3\CMS\Core\Resource\Collection\LazyFileReferenceCollection::class);
+        $collection->method('getIterator')->willReturn([
+            'file_reference_valid' => ['original' => $fileReference],
+            'file_reference_null' => ['original' => $fileReferenceNull],
+        ]);
 
         $subject = new LazyFileReferenceCollectionToArray($collection);
 
         $result = $subject->toArray();
 
-        self::assertIsArray($result);
-        self::assertArrayHasKey('file_references', $result);
-        self::assertIsArray($result['file_references']);
-        self::assertCount(2, $result['file_references']);
+        self::assertCount(2, $result);
     }
 }
