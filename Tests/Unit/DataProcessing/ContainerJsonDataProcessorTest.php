@@ -4,93 +4,146 @@ declare(strict_types=1);
 
 namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing;
 
-use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\TypolinkParameterToArray;
-use TYPO3\CMS\Core\LinkHandling\TypolinkParameter;
+use B13\Container\DataProcessing\ContainerProcessor;
+use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ContainerJsonDataProcessor;
+use TYPO3\CMS\Core\Domain\RecordFactory;
+use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class ContainerJsonDataProcessorTest extends UnitTestCase
 {
     public function testProcessReturnsArray(): void
     {
-        $typolinkConverter = new TypolinkParameterToArray(new TypolinkParameter(url: ''));
+        $tableDefinitionCollection = new \TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection();
+        $recordFactory = new RecordFactory();
+        $contentBlockDataDecorator = new \TYPO3\CMS\ContentBlocks\DataProcessing\ContentBlockDataDecorator();
+        $contentTypeResolver = new \TYPO3\CMS\ContentBlocks\DataProcessing\ContentTypeResolver();
+        $contentBlockRegistry = new \TYPO3\CMS\ContentBlocks\Registry\ContentBlockRegistry();
 
         $subject = new ContainerJsonDataProcessor(
-            new ResourceFactory(),
-            $typolinkConverter
+            $tableDefinitionCollection,
+            $recordFactory,
+            $contentBlockDataDecorator,
+            $contentTypeResolver,
+            $contentBlockRegistry
         );
 
-        $result = $subject->process(null, [], [], ['data' => ['test' => 'value']]);
+        $result = $subject->process(
+            GeneralUtility::makeInstance(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class),
+            [],
+            [],
+            ['data' => ['test' => 'value']]
+        );
 
         self::assertIsArray($result);
     }
 
     public function testProcessReturnsProcessedData(): void
     {
-        $typolinkConverter = new TypolinkParameterToArray(new TypolinkParameter(url: ''));
+        $tableDefinitionCollection = new \TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection();
+        $recordFactory = new RecordFactory();
+        $contentBlockDataDecorator = new \TYPO3\CMS\ContentBlocks\DataProcessing\ContentBlockDataDecorator();
+        $contentTypeResolver = new \TYPO3\CMS\ContentBlocks\DataProcessing\ContentTypeResolver();
+        $contentBlockRegistry = new \TYPO3\CMS\ContentBlocks\Registry\ContentBlockRegistry();
 
         $subject = new ContainerJsonDataProcessor(
-            new ResourceFactory(),
-            $typolinkConverter
+            $tableDefinitionCollection,
+            $recordFactory,
+            $contentBlockDataDecorator,
+            $contentTypeResolver,
+            $contentBlockRegistry
         );
 
         $data = ['data' => ['my_field' => 'value']];
-        $result = $subject->process(null, [], [], $data);
+        $result = $subject->process(
+            GeneralUtility::makeInstance(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class),
+            [],
+            [],
+            $data
+        );
 
         self::assertArrayHasKey('data', $result);
     }
 
     public function testProcessReturnsDataWithChildren(): void
     {
-        $typolinkConverter = new TypolinkParameterToArray(new TypolinkParameter(url: ''));
+        $tableDefinitionCollection = new \TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection();
+        $recordFactory = new RecordFactory();
+        $contentBlockDataDecorator = new \TYPO3\CMS\ContentBlocks\DataProcessing\ContentBlockDataDecorator();
+        $contentTypeResolver = new \TYPO3\CMS\ContentBlocks\DataProcessing\ContentTypeResolver();
+        $contentBlockRegistry = new \TYPO3\CMS\ContentBlocks\Registry\ContentBlockRegistry();
 
         $subject = new ContainerJsonDataProcessor(
-            new ResourceFactory(),
-            $typolinkConverter
+            $tableDefinitionCollection,
+            $recordFactory,
+            $contentBlockDataDecorator,
+            $contentTypeResolver,
+            $contentBlockRegistry
         );
 
         $data = ['data' => ['my_field' => 'value']];
-        $result = $subject->process(null, [], [], $data);
+        $result = $subject->process(
+            GeneralUtility::makeInstance(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class),
+            [],
+            [],
+            $data
+        );
 
         self::assertArrayHasKey('data', $result);
     }
 
     public function testProcessExtractsRenderedContentFromChildren(): void
     {
-        $typolinkConverter = new TypolinkParameterToArray(new TypolinkParameter(url: ''));
+        $tableDefinitionCollection = new \TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection();
+        $recordFactory = new RecordFactory();
+        $contentBlockDataDecorator = new \TYPO3\CMS\ContentBlocks\DataProcessing\ContentBlockDataDecorator();
+        $contentTypeResolver = new \TYPO3\CMS\ContentBlocks\DataProcessing\ContentTypeResolver();
+        $contentBlockRegistry = new \TYPO3\CMS\ContentBlocks\Registry\ContentBlockRegistry();
 
         $subject = new ContainerJsonDataProcessor(
-            new ResourceFactory(),
-            $typolinkConverter
+            $tableDefinitionCollection,
+            $recordFactory,
+            $contentBlockDataDecorator,
+            $contentTypeResolver,
+            $contentBlockRegistry
         );
 
         $data = ['data' => ['my_field' => 'value']];
-        $result = $subject->process(null, [], [], $data);
+        $result = $subject->process(
+            GeneralUtility::makeInstance(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class),
+            [],
+            [],
+            $data
+        );
 
         self::assertArrayHasKey('data', $result);
     }
 
     public function testProcessUsesChildrenAsDefaultAsKey(): void
     {
-        $typolinkConverter = new TypolinkParameterToArray(new TypolinkParameter(url: ''));
+        $tableDefinitionCollection = new \TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection();
+        $recordFactory = new RecordFactory();
+        $contentBlockDataDecorator = new \TYPO3\CMS\ContentBlocks\DataProcessing\ContentBlockDataDecorator();
+        $contentTypeResolver = new \TYPO3\CMS\ContentBlocks\DataProcessing\ContentTypeResolver();
+        $contentBlockRegistry = new \TYPO3\CMS\ContentBlocks\Registry\ContentBlockRegistry();
 
         $subject = new ContainerJsonDataProcessor(
-            new ResourceFactory(),
-            $typolinkConverter
+            $tableDefinitionCollection,
+            $recordFactory,
+            $contentBlockDataDecorator,
+            $contentTypeResolver,
+            $contentBlockRegistry
         );
 
         $data = ['data' => ['my_field' => 'value']];
-        $result = $subject->process(null, [], [], $data);
+        $result = $subject->process(
+            GeneralUtility::makeInstance(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class),
+            [],
+            [],
+            $data
+        );
 
         self::assertArrayHasKey('data', $result);
-    }
-
-    /**
-     * @param mixed $value
-     */
-    private function createSubject($value): ContainerJsonDataProcessor
-    {
-        $typolinkConverter = new TypolinkParameterToArray(new TypolinkParameter(url: ''));
-
-        return new ContainerJsonDataProcessor(new ResourceFactory(), $typolinkConverter);
     }
 }
