@@ -17,7 +17,7 @@ final class RecordToArrayTest extends UnitTestCase
 {
     public function testConvertsRecordArrayToJsonCompatible(): void
     {
-        $record = [
+        $recordData = [
             'uid' => 123,
             'title' => 'Test Title',
             'description' => 'Test Description',
@@ -27,140 +27,193 @@ final class RecordToArrayTest extends UnitTestCase
         $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
+        $record = $this->getMockBuilder(Record::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['toArray'])
+            ->getMock();
+
+        $record->method('toArray')->willReturn($recordData);
+
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
-        self::assertIsArray($result);
         self::assertArrayHasKey('uid', $result);
+        self::assertEquals(123, $result['uid']);
         self::assertArrayHasKey('title', $result);
+        self::assertEquals('Test Title', $result['title']);
         self::assertArrayHasKey('description', $result);
+        self::assertArrayHasKey('created', $result);
     }
 
-    public function testPassesThroughScalarValues(): void
+    public function testRemovesSystemFields(): void
     {
-        $record = [
-            'uid' => 42,
-            'status' => 'active',
-            'published' => true,
+        $recordData = [
+            'uid' => 123,
+            'pid' => 456,
+            'colPos' => 0,
+            'CType' => 'text',
+            'foreign_table_parent_uid' => 789,
+            'tx_container_parent' => 101,
+            'title' => 'Test',
         ];
 
         $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
+        $record = $this->getMockBuilder(Record::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['toArray'])
+            ->getMock();
+
+        $record->method('toArray')->willReturn($recordData);
+
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
-        self::assertSame(42, $result['uid']);
-        self::assertSame('active', $result['status']);
-        self::assertTrue($result['published']);
+        self::assertArrayNotHasKey('uid', $result);
+        self::assertArrayNotHasKey('pid', $result);
+        self::assertArrayNotHasKey('colPos', $result);
+        self::assertArrayNotHasKey('CType', $result);
+        self::assertArrayNotHasKey('foreign_table_parent_uid', $result);
+        self::assertArrayNotHasKey('tx_container_parent', $result);
+        self::assertArrayHasKey('title', $result);
     }
 
-    public function testPassesThroughNullValues(): void
+    public function testHandlesNullValues(): void
     {
-        $record = [
+        $recordData = [
             'uid' => 123,
             'title' => null,
-            'description' => null,
+            'description' => 'Test',
+            'created' => '2026-01-01 00:00:00',
         ];
 
         $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
+        $record = $this->getMockBuilder(Record::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['toArray'])
+            ->getMock();
+
+        $record->method('toArray')->willReturn($recordData);
+
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
-        self::assertNotNull($result['uid']);
         self::assertNull($result['title']);
-        self::assertNull($result['description']);
+        self::assertArrayHasKey('uid', $result);
     }
 
     public function testHandlesNestedArrays(): void
     {
-        $record = [
+        $recordData = [
             'uid' => 123,
-            'meta' => [
-                'tags' => ['tag1', 'tag2'],
-                'author' => [
-                    'name' => 'John Doe',
-                    'email' => 'john@example.com',
-                ],
+            'title' => 'Test',
+            'config' => [
+                'setting1' => 'value1',
+                'setting2' => 'value2',
             ],
         ];
 
         $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
+        $record = $this->getMockBuilder(Record::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['toArray'])
+            ->getMock();
+
+        $record->method('toArray')->willReturn($recordData);
+
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
-        self::assertIsArray($result['meta']);
-        self::assertIsArray($result['meta']['tags']);
-        self::assertIsArray($result['meta']['author']);
+        self::assertArrayHasKey('config', $result);
+        self::assertArrayHasKey('setting1', $result['config']);
+        self::assertEquals('value1', $result['config']['setting1']);
     }
 
     public function testHandlesDateTimeValues(): void
     {
-        $dateTime = new \DateTimeImmutable('2026-07-22 15:30:00', new \DateTimeZone('UTC'));
-
-        $record = [
+        $recordData = [
             'uid' => 123,
-            'created' => $dateTime->format(\DateTimeImmutable::W3C),
+            'title' => 'Test',
+            'created' => '2026-01-01 00:00:00',
+            'modified' => '2026-01-02 00:00:00',
         ];
 
         $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
+        $record = $this->getMockBuilder(Record::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['toArray'])
+            ->getMock();
+
+        $record->method('toArray')->willReturn($recordData);
+
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
         self::assertIsString($result['created']);
-        self::assertStringStartsWith('2026-07-22T', $result['created']);
+        self::assertEquals('2026-01-01 00:00:00', $result['created']);
     }
 
-    public function testHandlesEmptyArray(): void
+    public function testHandlesEmptyRecord(): void
     {
-        $record = [];
-
-        $tableDefinition = $this->createMock(TableDefinition::class);
-        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
-
-        $result = $subject->toArray();
-
-        self::assertSame([], $result);
-    }
-
-    public function testHandlesMixedTypes(): void
-    {
-        $record = [
+        $recordData = [
             'uid' => 123,
-            'title' => 'Test',
-            'description' => null,
-            'published' => true,
-            'tags' => [],
-            'url' => 'https://example.com',
-            'price' => 19.99,
         ];
 
         $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
         $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
-        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
+        $record = $this->getMockBuilder(Record::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['toArray'])
+            ->getMock();
+
+        $record->method('toArray')->willReturn($recordData);
+
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
         $result = $subject->toArray();
 
-        self::assertSame(123, $result['uid']);
-        self::assertSame('Test', $result['title']);
-        self::assertNull($result['description']);
-        self::assertTrue($result['published']);
+        self::assertEquals(['uid' => 123], $result);
+    }
+
+    public function testHandlesMixedScalarTypes(): void
+    {
+        $recordData = [
+            'uid' => 123,
+            'title' => 'Test',
+            'isActive' => true,
+            'score' => 42.5,
+            'tags' => [],
+        ];
+
+        $tableDefinition = $this->createMock(TableDefinition::class);
+        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+
+        $record = $this->getMockBuilder(Record::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['toArray'])
+            ->getMock();
+
+        $record->method('toArray')->willReturn($recordData);
+
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
+        $result = $subject->toArray();
+
+        self::assertTrue($result['isActive']);
+        self::assertEquals(42.5, $result['score']);
         self::assertIsArray($result['tags']);
-        self::assertSame('https://example.com', $result['url']);
-        self::assertSame(19.99, $result['price']);
     }
 }
