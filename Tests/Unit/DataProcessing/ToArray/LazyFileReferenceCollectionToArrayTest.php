@@ -7,11 +7,14 @@ namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray
 use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\LazyFileReferenceCollectionToArray;
 use TYPO3\CMS\Core\Resource\Collection\LazyFileReferenceCollection;
 use TYPO3\CMS\Core\Resource\FileReference;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Service\ImageService;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
 {
+    protected bool $resetSingletonInstances = true;
+
     public function testEmptyCollectionReturnsEmptyArray(): void
     {
         $collectionMock = $this->createMock(LazyFileReferenceCollection::class);
@@ -48,7 +51,7 @@ final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
             }
         );
 
-        $this->injectClassMock(ImageService::class, $imageServiceMock);
+        GeneralUtility::setSingletonInstance(ImageService::class, $imageServiceMock);
 
         $subject = new LazyFileReferenceCollectionToArray($collectionMock);
 
@@ -83,17 +86,12 @@ final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
         $imageServiceMock = $this->createMock(ImageService::class);
         $imageServiceMock->method('getImageUri')->willReturn('/uploads/test.jpg');
 
-        $this->injectClassMock(ImageService::class, $imageServiceMock);
+        GeneralUtility::setSingletonInstance(ImageService::class, $imageServiceMock);
 
         $subject = new LazyFileReferenceCollectionToArray($collectionMock);
 
         $result = $subject->toArray();
 
         self::assertArrayHasKey(42, $result);
-    }
-
-    private function injectClassMock(string $className, object $mock): void
-    {
-        $GLOBALS['__typo3_test_instance_mock_' . md5($className)] = $mock;
     }
 }
