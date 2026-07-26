@@ -10,7 +10,7 @@ use TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection;
 use TYPO3\CMS\ContentBlocks\Registry\AutomaticLanguageKeysRegistry;
 use TYPO3\CMS\Core\Domain\Record;
 use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
-use TYPO3\CMS\Core\EventDispatcher\ListenerProviderInterface;
+use Psr\EventDispatcher\ListenerProviderInterface;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class RecordToArrayTest extends UnitTestCase
