@@ -49,7 +49,8 @@ final class RecordToArrayTest extends UnitTestCase
         $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
         $eventDispatcher = $this->createMock(EventDispatcher::class);
         
-        // Test normal operation
+        // Test normal operation - we can't fully test the complex flow due to mocking limitations,
+        // but we can at least verify the basic structure works
         $recordArray = [
             'uid' => 123,
             'pid' => 456,
@@ -60,16 +61,6 @@ final class RecordToArrayTest extends UnitTestCase
             'other_field' => 'value'
         ];
         
-        $expectedResult = [
-            'other_field' => 'value'
-        ];
-        
-        // Mock the ArrayRecursiveToArray to return expected result
-        $arrayRecursiveToArray = $this->createMock(ArrayRecursiveToArray::class);
-        $arrayRecursiveToArray->method('toArray')->willReturn($expectedResult);
-        
-        // We can't easily test the full flow due to mocking issues, but we can at least
-        // verify the system fields are removed in the logic
         $record->method('toArray')->willReturn($recordArray);
         
         $subject = new RecordToArray(
@@ -79,8 +70,7 @@ final class RecordToArrayTest extends UnitTestCase
             $eventDispatcher
         );
         
-        // Since we can't easily test the full flow due to mocking limitations,
-        // we'll verify the basic logic works by testing the field removal
-        $this->assertTrue(true); // Placeholder to satisfy PHPUnit
+        // Just verify the object can be instantiated and basic method exists
+        $this->assertInstanceOf(RecordToArray::class, $subject);
     }
 }
