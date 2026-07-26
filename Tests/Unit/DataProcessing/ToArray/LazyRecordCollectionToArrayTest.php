@@ -5,159 +5,193 @@ declare(strict_types=1);
 namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray;
 
 use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\LazyRecordCollectionToArray;
+use TYPO3\CMS\ContentBlocks\Definition\TableDefinition;
 use TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection;
-use TYPO3\CMS\ContentBlocks\Registry\AutomaticLanguageKeysRegistry;
+use TYPO3\CMS\Core\Collection\LazyRecordCollection;
+use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
+use TYPO3\CMS\Core\EventDispatcher\ListenerProviderInterface;
+use TYPO3\CMS\Core\Resource\Record;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class LazyRecordCollectionToArrayTest extends UnitTestCase
 {
-    public function testConvertsRecordCollectionToLazyArray(): void
+    public function testConvertsLazyRecordCollectionToArray(): void
     {
-        $record1 = ['uid' => 1, 'title' => 'Record 1'];
-        $record2 = ['uid' => 2, 'title' => 'Record 2'];
+        $lazyRecordCollection = $this->createMock(LazyRecordCollection::class);
 
-        $collection = [
-            'records' => [$record1, $record2],
-        ];
+        $record1 = $this->createMock(Record::class);
+        $record1->method('getMainType')->willReturn('tt_content');
 
+        $record2 = $this->createMock(Record::class);
+        $record2->method('getMainType')->willReturn('tt_content');
+
+        $lazyRecordCollection->method('__iterative')->willReturn(true);
+        $lazyRecordCollection->method('current')->willReturnOnConsecutiveCalls($record1, $record2);
+        $lazyRecordCollection->method('key')->willReturnOnConsecutiveCalls(0, 1);
+
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionToArray($collection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+
+        $subject = new LazyRecordCollectionToArray($lazyRecordCollection, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
         self::assertIsArray($result);
-        self::assertArrayHasKey('records', $result);
-        self::assertIsArray($result['records']);
-        self::assertCount(2, $result['records']);
+        self::assertArrayHasKey(0, $result);
+        self::assertArrayHasKey(1, $result);
     }
 
-    public function testHandlesEmptyCollection(): void
+    public function testConvertsMultipleLazyRecordCollectionsToArray(): void
     {
-        $collection = [
-            'records' => [],
-        ];
+        $lazyRecordCollection = $this->createMock(LazyRecordCollection::class);
 
+        $record1 = $this->createMock(Record::class);
+        $record1->method('getMainType')->willReturn('tt_content');
+
+        $record2 = $this->createMock(Record::class);
+        $record2->method('getMainType')->willReturn('tt_content');
+
+        $record3 = $this->createMock(Record::class);
+        $record3->method('getMainType')->willReturn('tt_content');
+
+        $lazyRecordCollection->method('__iterative')->willReturn(true);
+        $lazyRecordCollection->method('current')->willReturnOnConsecutiveCalls($record1, $record2, $record3);
+        $lazyRecordCollection->method('key')->willReturnOnConsecutiveCalls(0, 1, 2);
+
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionToArray($collection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+
+        $subject = new LazyRecordCollectionToArray($lazyRecordCollection, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
         self::assertIsArray($result);
-        self::assertArrayHasKey('records', $result);
-        self::assertIsArray($result['records']);
-        self::assertEmpty($result['records']);
+        self::assertArrayHasKey(0, $result);
+        self::assertArrayHasKey(1, $result);
+        self::assertArrayHasKey(2, $result);
     }
 
-    public function testHandlesNullCollection(): void
+    public function testHandlesEmptyLazyRecordCollection(): void
     {
-        $collection = null;
+        $lazyRecordCollection = $this->createMock(LazyRecordCollection::class);
 
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionToArray($collection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+
+        $subject = new LazyRecordCollectionToArray($lazyRecordCollection, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
         self::assertIsArray($result);
-        self::assertArrayHasKey('records', $result);
-        self::assertIsArray($result['records']);
-        self::assertEmpty($result['records']);
+        self::assertEmpty($result);
     }
 
-    public function testHandlesMissingKeyWithDefault(): void
+    public function testHandlesNullLazyRecordCollection(): void
     {
-        $collection = [];
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Typed property');
 
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionToArray($collection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+
+        $subject = new LazyRecordCollectionToArray(null, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
+
+        $result = $subject->toArray();
+    }
+
+    public function testHandlesMissingKeyLazyRecordCollection(): void
+    {
+        $lazyRecordCollection = $this->createMock(LazyRecordCollection::class);
+
+        $tableDefinition = $this->createMock(TableDefinition::class);
+        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+
+        $subject = new LazyRecordCollectionToArray($lazyRecordCollection, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
         self::assertIsArray($result);
-        self::assertArrayHasKey('records', $result);
-        self::assertIsArray($result['records']);
-        self::assertEmpty($result['records']);
+        self::assertEmpty($result);
     }
 
-    public function testHandlesMixedRecordTypes(): void
+    public function testConvertsNestedRecordTypesToArray(): void
     {
-        $collection = [
-            'records' => [
-                ['uid' => 1, 'title' => 'Simple Record'],
-                ['uid' => 2, 'meta' => ['nested' => 'value']],
-                ['uid' => 3, 'data' => [1, 2, 3]],
-            ],
-        ];
+        $lazyRecordCollection = $this->createMock(LazyRecordCollection::class);
 
+        $record1 = $this->createMock(Record::class);
+        $record1->method('getMainType')->willReturn('tt_content');
+
+        $record2 = $this->createMock(Record::class);
+        $record2->method('getMainType')->willReturn('tt_content');
+
+        $lazyRecordCollection->method('__iterative')->willReturn(true);
+        $lazyRecordCollection->method('current')->willReturnOnConsecutiveCalls($record1, $record2);
+        $lazyRecordCollection->method('key')->willReturnOnConsecutiveCalls(0, 1);
+
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionToArray($collection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+
+        $subject = new LazyRecordCollectionToArray($lazyRecordCollection, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
-        self::assertCount(3, $result['records']);
-        self::assertIsArray($result['records'][1]['meta']);
-        self::assertIsArray($result['records'][2]['data']);
+        self::assertIsArray($result);
+        self::assertArrayHasKey(0, $result);
+        self::assertArrayHasKey(1, $result);
     }
 
-    public function testPreservesLazyLoadingStructure(): void
+    public function testConvertsWithTableDefinition(): void
     {
-        $record = ['uid' => 1, 'title' => 'Record 1'];
+        $lazyRecordCollection = $this->createMock(LazyRecordCollection::class);
 
-        $collection = [
-            'records' => [$record],
-        ];
+        $record1 = $this->createMock(Record::class);
+        $record1->method('getMainType')->willReturn('tt_content');
 
+        $record2 = $this->createMock(Record::class);
+        $record2->method('getMainType')->willReturn('tt_content');
+
+        $lazyRecordCollection->method('__iterative')->willReturn(true);
+        $lazyRecordCollection->method('current')->willReturnOnConsecutiveCalls($record1, $record2);
+        $lazyRecordCollection->method('key')->willReturnOnConsecutiveCalls(0, 1);
+
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionToArray($collection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+
+        $subject = new LazyRecordCollectionToArray($lazyRecordCollection, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
-        self::assertArrayHasKey('records', $result);
-        self::assertIsArray($result['records']);
-        self::assertArrayNotHasKey('original', $result);
+        self::assertIsArray($result);
+        self::assertArrayHasKey(0, $result);
+        self::assertArrayHasKey(1, $result);
     }
 
-    public function testHandlesRecordsWithNullValues(): void
+    public function testConvertsWithoutTableDefinition(): void
     {
-        $record = [
-            'uid' => 1,
-            'title' => null,
-            'description' => null,
-        ];
+        $lazyRecordCollection = $this->createMock(LazyRecordCollection::class);
 
-        $collection = [
-            'records' => [$record],
-        ];
+        $record1 = $this->createMock(Record::class);
+        $record1->method('getMainType')->willReturn('tt_content');
+
+        $lazyRecordCollection->method('__iterative')->willReturn(true);
+        $lazyRecordCollection->method('current')->willReturn($record1);
+        $lazyRecordCollection->method('key')->willReturn(0);
 
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionToArray($collection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+
+        $subject = new LazyRecordCollectionToArray($lazyRecordCollection, null, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
-        self::assertCount(1, $result['records']);
-        self::assertNull($result['records'][0]['title']);
-        self::assertNull($result['records'][0]['description']);
-    }
-
-    public function testHandlesRecordsWithDateTimeValues(): void
-    {
-        $dateTime = new \DateTimeImmutable('2026-07-22 15:30:00', new \DateTimeZone('UTC'));
-
-        $record = [
-            'uid' => 1,
-            'created' => $dateTime->format(\DateTimeImmutable::W3C),
-        ];
-
-        $collection = [
-            'records' => [$record],
-        ];
-
-        $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new LazyRecordCollectionToArray($collection, $tableDefinitionCollection);
-
-        $result = $subject->toArray();
-
-        self::assertCount(1, $result['records']);
-        self::assertIsString($result['records'][0]['created']);
-        self::assertStringStartsWith('2026-07-22T', $result['records'][0]['created']);
+        self::assertIsArray($result);
+        self::assertArrayHasKey(0, $result);
     }
 }

@@ -4,106 +4,42 @@ declare(strict_types=1);
 
 namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing;
 
-use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ContentBlocksJsonDataProcessor;
+use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ContainerJsonDataProcessor;
+use TYPO3\CMS\ContentBlocks\DataProcessing\ContentBlockDataDecorator;
 use TYPO3\CMS\ContentBlocks\DataProcessing\ContentTypeResolver;
 use TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection;
 use TYPO3\CMS\ContentBlocks\Registry\ContentBlockRegistry;
 use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
-use TYPO3\CMS\Core\EventDispatcher\ListenerProviderInterface;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
-final class ContentBlocksJsonDataProcessorTest extends UnitTestCase
+final class ContainerJsonDataProcessorTest extends UnitTestCase
 {
-    public function testReturnsProcessedDataWhenTableNotFound(): void
-    {
-        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
-        $tableDefinitionCollection->method('hasTable')->with('tt_content')->willReturn(false);
-
-        $recordFactory = $this->createMock(\TYPO3\CMS\Core\Domain\RecordFactory::class);
-        $contentTypeResolver = $this->createMock(ContentTypeResolver::class);
-        $contentBlockRegistry = $this->createMock(ContentBlockRegistry::class);
-        $eventDispatcher = new EventDispatcher();
-
-        $processor = new ContentBlocksJsonDataProcessor(
-            $tableDefinitionCollection,
-            $recordFactory,
-            $contentTypeResolver,
-            $contentBlockRegistry,
-            $eventDispatcher
-        );
-
-        $processedData = ['data' => ['uid' => 123]];
-        $result = $processor->process(
-            $this->createMock(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class),
-            [],
-            ['as' => 'data'],
-            $processedData
-        );
-
-        self::assertIsArray($result);
-        self::assertArrayHasKey('data', $result);
-    }
-
-    public function testProcessesDataWhenTableFound(): void
+    public function testReturnsDataWithoutContainerRenderer(): void
     {
         $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
         $tableDefinitionCollection->method('hasTable')->with('tt_content')->willReturn(true);
         $tableDefinitionCollection->method('getTable')->willReturn(['columns' => []]);
 
         $recordFactory = $this->createMock(\TYPO3\CMS\Core\Domain\RecordFactory::class);
-        $contentTypeResolver = $this->createMock(ContentTypeResolver::class);
-        $contentBlockRegistry = $this->createMock(ContentBlockRegistry::class);
-        $contentBlockRegistry->method('getContentBlockExtPath')->willReturn('ext_key/');
-
-        $record = ['uid' => 123, 'title' => 'Test'];
-        $recordFactory->method('createResolvedRecordFromDatabaseRow')->willReturn($record);
-
-        $contentTypeDefinition = $this->createMock(\TYPO3\CMS\ContentBlocks\Definition\ContentType\ContentTypeInterface::class);
-        $contentTypeResolver->method('resolve')->willReturn($contentTypeDefinition);
-
-        $eventDispatcher = new EventDispatcher();
-
-        $processor = new ContentBlocksJsonDataProcessor(
-            $tableDefinitionCollection,
-            $recordFactory,
-            $contentTypeResolver,
-            $contentBlockRegistry,
-            $eventDispatcher
-        );
-
-        $processedData = ['data' => ['uid' => 123]];
-        $result = $processor->process(
-            $this->createMock(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class),
-            [],
-            ['as' => 'data'],
-            $processedData
-        );
-
-        self::assertIsArray($result);
-        self::assertArrayHasKey('data', $result);
-    }
-
-    public function testReturnsResolvedRecordWhenContentTypeIsNotInterface(): void
-    {
-        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
-        $tableDefinitionCollection->method('hasTable')->with('tt_content')->willReturn(true);
-
-        $record = ['uid' => 123, 'title' => 'Test'];
-        $recordFactory = $this->createMock(\TYPO3\CMS\Core\Domain\RecordFactory::class);
-        $recordFactory->method('createResolvedRecordFromDatabaseRow')->willReturn($record);
+        $recordFactory->method('createResolvedRecordFromDatabaseRow')->willReturn(['uid' => 123]);
 
         $contentTypeResolver = $this->createMock(ContentTypeResolver::class);
         $contentTypeResolver->method('resolve')->willReturn(null);
 
         $contentBlockRegistry = $this->createMock(ContentBlockRegistry::class);
+        $contentBlockRegistry->method('getContentBlockExtPath')->willReturn('ext_key/');
+
+        $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
+        $contentBlockDataDecorator->method('get')->willReturn(null);
+
         $eventDispatcher = new EventDispatcher();
 
-        $processor = new ContentBlocksJsonDataProcessor(
+        $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
             $recordFactory,
+            $contentBlockDataDecorator,
             $contentTypeResolver,
-            $contentBlockRegistry,
-            $eventDispatcher
+            $contentBlockRegistry
         );
 
         $processedData = ['data' => ['uid' => 123]];
@@ -118,10 +54,10 @@ final class ContentBlocksJsonDataProcessorTest extends UnitTestCase
         self::assertArrayHasKey('data', $result);
     }
 
-    public function testProcessesWithCustomAsKey(): void
+    public function testReturnsDataForNonNestedType(): void
     {
         $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
-        $tableDefinitionCollection->method('hasTable')->willReturn(true);
+        $tableDefinitionCollection->method('hasTable')->with('tt_content')->willReturn(true);
         $tableDefinitionCollection->method('getTable')->willReturn(['columns' => []]);
 
         $recordFactory = $this->createMock(\TYPO3\CMS\Core\Domain\RecordFactory::class);
@@ -133,32 +69,35 @@ final class ContentBlocksJsonDataProcessorTest extends UnitTestCase
         $contentBlockRegistry = $this->createMock(ContentBlockRegistry::class);
         $contentBlockRegistry->method('getContentBlockExtPath')->willReturn('ext_key/');
 
+        $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
+        $contentBlockDataDecorator->method('get')->willReturn([]);
+
         $eventDispatcher = new EventDispatcher();
 
-        $processor = new ContentBlocksJsonDataProcessor(
+        $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
             $recordFactory,
+            $contentBlockDataDecorator,
             $contentTypeResolver,
-            $contentBlockRegistry,
-            $eventDispatcher
+            $contentBlockRegistry
         );
 
+        $processedData = ['data' => ['uid' => 123]];
         $result = $processor->process(
             $this->createMock(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class),
             [],
-            ['as' => 'content'],
-            ['data' => ['uid' => 123]]
+            ['as' => 'data'],
+            $processedData
         );
 
         self::assertIsArray($result);
-        self::assertArrayHasKey('content', $result);
-        self::assertArrayNotHasKey('data', $result);
+        self::assertArrayHasKey('data', $result);
     }
 
-    public function testProcessesAdditionalDataProcessors(): void
+    public function testReturnsDataForNestedType(): void
     {
         $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
-        $tableDefinitionCollection->method('hasTable')->willReturn(true);
+        $tableDefinitionCollection->method('hasTable')->with('tt_content')->willReturn(true);
         $tableDefinitionCollection->method('getTable')->willReturn(['columns' => []]);
 
         $recordFactory = $this->createMock(\TYPO3\CMS\Core\Domain\RecordFactory::class);
@@ -170,23 +109,66 @@ final class ContentBlocksJsonDataProcessorTest extends UnitTestCase
         $contentBlockRegistry = $this->createMock(ContentBlockRegistry::class);
         $contentBlockRegistry->method('getContentBlockExtPath')->willReturn('ext_key/');
 
+        $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
+        $contentBlockDataDecorator->method('get')->willReturn([]);
+
         $eventDispatcher = new EventDispatcher();
 
-        $processor = new ContentBlocksJsonDataProcessor(
+        $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
             $recordFactory,
+            $contentBlockDataDecorator,
             $contentTypeResolver,
-            $contentBlockRegistry,
-            $eventDispatcher
+            $contentBlockRegistry
+        );
+
+        $processedData = ['data' => ['uid' => 123]];
+        $result = $processor->process(
+            $this->createMock(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class),
+            [],
+            ['as' => 'data'],
+            $processedData
+        );
+
+        self::assertIsArray($result);
+        self::assertArrayHasKey('data', $result);
+    }
+
+    public function testProcessesWithContainerRenderer(): void
+    {
+        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
+        $tableDefinitionCollection->method('hasTable')->with('tt_content')->willReturn(true);
+        $tableDefinitionCollection->method('getTable')->willReturn(['columns' => []]);
+
+        $recordFactory = $this->createMock(\TYPO3\CMS\Core\Domain\RecordFactory::class);
+        $recordFactory->method('createResolvedRecordFromDatabaseRow')->willReturn(['uid' => 123]);
+
+        $contentTypeResolver = $this->createMock(ContentTypeResolver::class);
+        $contentTypeResolver->method('resolve')->willReturn($this->createMock(\TYPO3\CMS\ContentBlocks\Definition\ContentType\ContentTypeInterface::class));
+
+        $contentBlockRegistry = $this->createMock(ContentBlockRegistry::class);
+        $contentBlockRegistry->method('getContentBlockExtPath')->willReturn('ext_key/');
+
+        $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
+        $contentBlockDataDecorator->method('get')->willReturn([]);
+
+        $eventDispatcher = new EventDispatcher();
+
+        $processor = new ContainerJsonDataProcessor(
+            $tableDefinitionCollection,
+            $recordFactory,
+            $contentBlockDataDecorator,
+            $contentTypeResolver,
+            $contentBlockRegistry
         );
 
         $configuration = [
             'as' => 'data',
             'dataProcessing.' => [
                 '1' => [
-                    'processor' => 'TYPO3\CMS\Frontend\Page\PageUrl',
+                    'processor' => 'B13\Container\DataProcessing\ContainerProcessor',
                     'additionalParams' => [
-                        'useSsl' => 1,
+                        'containerRowUid' => 1,
                     ],
                 ],
             ],
@@ -203,15 +185,14 @@ final class ContentBlocksJsonDataProcessorTest extends UnitTestCase
         self::assertArrayHasKey('data', $result);
     }
 
-    public function testHeadlessPhpFileExistsIsExecuted(): void
+    public function testUsesContainerProcessorForNestedContainer(): void
     {
         $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
-        $tableDefinitionCollection->method('hasTable')->willReturn(true);
+        $tableDefinitionCollection->method('hasTable')->with('tt_content')->willReturn(true);
         $tableDefinitionCollection->method('getTable')->willReturn(['columns' => []]);
 
-        $record = ['uid' => 123];
         $recordFactory = $this->createMock(\TYPO3\CMS\Core\Domain\RecordFactory::class);
-        $recordFactory->method('createResolvedRecordFromDatabaseRow')->willReturn($record);
+        $recordFactory->method('createResolvedRecordFromDatabaseRow')->willReturn(['uid' => 123]);
 
         $contentTypeResolver = $this->createMock(ContentTypeResolver::class);
         $contentTypeResolver->method('resolve')->willReturn($this->createMock(\TYPO3\CMS\ContentBlocks\Definition\ContentType\ContentTypeInterface::class));
@@ -219,63 +200,41 @@ final class ContentBlocksJsonDataProcessorTest extends UnitTestCase
         $contentBlockRegistry = $this->createMock(ContentBlockRegistry::class);
         $contentBlockRegistry->method('getContentBlockExtPath')->willReturn('ext_key/');
 
+        $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
+        $contentBlockDataDecorator->method('get')->willReturn([]);
+
         $eventDispatcher = new EventDispatcher();
 
-        $processor = new ContentBlocksJsonDataProcessor(
+        $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
             $recordFactory,
+            $contentBlockDataDecorator,
             $contentTypeResolver,
-            $contentBlockRegistry,
-            $eventDispatcher
+            $contentBlockRegistry
         );
 
-        $processedData = ['data' => ['uid' => 123]];
+        $configuration = [
+            'as' => 'data',
+            'dataProcessing.' => [
+                '1' => [
+                    'processor' => 'B13\Container\DataProcessing\ContainerProcessor',
+                    'additionalParams' => [
+                        'containerRowUid' => 1,
+                        'subContainerUid' => 0,
+                    ],
+                ],
+            ],
+        ];
+
         $result = $processor->process(
             $this->createMock(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class),
             [],
-            ['as' => 'data'],
-            $processedData
+            $configuration,
+            ['data' => ['uid' => 123]]
         );
 
         self::assertIsArray($result);
         self::assertArrayHasKey('data', $result);
-    }
-
-    public function testHeadlessPhpFileDoesNotExistIsSkipped(): void
-    {
-        $this->expectException(\RuntimeException::class);
-
-        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
-        $tableDefinitionCollection->method('hasTable')->willReturn(true);
-        $tableDefinitionCollection->method('getTable')->willReturn(['columns' => []]);
-
-        $record = ['uid' => 123];
-        $recordFactory = $this->createMock(\TYPO3\CMS\Core\Domain\RecordFactory::class);
-        $recordFactory->method('createResolvedRecordFromDatabaseRow')->willReturn($record);
-
-        $contentTypeResolver = $this->createMock(ContentTypeResolver::class);
-        $contentTypeResolver->method('resolve')->willReturn($this->createMock(\TYPO3\CMS\ContentBlocks\Definition\ContentType\ContentTypeInterface::class));
-
-        $contentBlockRegistry = $this->createMock(ContentBlockRegistry::class);
-        $contentBlockRegistry->method('getContentBlockExtPath')->willReturn('ext_key/');
-
-        $eventDispatcher = new EventDispatcher();
-
-        $processor = new ContentBlocksJsonDataProcessor(
-            $tableDefinitionCollection,
-            $recordFactory,
-            $contentTypeResolver,
-            $contentBlockRegistry,
-            $eventDispatcher
-        );
-
-        $processedData = ['data' => ['uid' => 123]];
-        $processor->process(
-            $this->createMock(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class),
-            [],
-            ['as' => 'data'],
-            $processedData
-        );
     }
 
     public function testHandlesEmptyProcessorConfiguration(): void
@@ -293,14 +252,17 @@ final class ContentBlocksJsonDataProcessorTest extends UnitTestCase
         $contentBlockRegistry = $this->createMock(ContentBlockRegistry::class);
         $contentBlockRegistry->method('getContentBlockExtPath')->willReturn('ext_key/');
 
+        $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
+        $contentBlockDataDecorator->method('get')->willReturn([]);
+
         $eventDispatcher = new EventDispatcher();
 
-        $processor = new ContentBlocksJsonDataProcessor(
+        $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
             $recordFactory,
+            $contentBlockDataDecorator,
             $contentTypeResolver,
-            $contentBlockRegistry,
-            $eventDispatcher
+            $contentBlockRegistry
         );
 
         $result = $processor->process(
@@ -328,14 +290,17 @@ final class ContentBlocksJsonDataProcessorTest extends UnitTestCase
         $contentBlockRegistry = $this->createMock(ContentBlockRegistry::class);
         $contentBlockRegistry->method('getContentBlockExtPath')->willReturn('ext_key/');
 
+        $contentBlockDataDecorator = $this->createMock(ContentBlockDataDecorator::class);
+        $contentBlockDataDecorator->method('get')->willReturn([]);
+
         $eventDispatcher = new EventDispatcher();
 
-        $processor = new ContentBlocksJsonDataProcessor(
+        $processor = new ContainerJsonDataProcessor(
             $tableDefinitionCollection,
             $recordFactory,
+            $contentBlockDataDecorator,
             $contentTypeResolver,
-            $contentBlockRegistry,
-            $eventDispatcher
+            $contentBlockRegistry
         );
 
         $configuration = [

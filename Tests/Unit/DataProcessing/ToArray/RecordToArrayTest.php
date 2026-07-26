@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray;
 
 use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\RecordToArray;
+use TYPO3\CMS\ContentBlocks\Definition\TableDefinition;
 use TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection;
 use TYPO3\CMS\ContentBlocks\Registry\AutomaticLanguageKeysRegistry;
+use TYPO3\CMS\Core\Domain\Record;
+use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
+use TYPO3\CMS\Core\EventDispatcher\ListenerProviderInterface;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class RecordToArrayTest extends UnitTestCase
@@ -20,8 +24,10 @@ final class RecordToArrayTest extends UnitTestCase
             'created' => '2026-01-01 00:00:00',
         ];
 
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new RecordToArray($record, $tableDefinitionCollection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
@@ -39,8 +45,10 @@ final class RecordToArrayTest extends UnitTestCase
             'published' => true,
         ];
 
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new RecordToArray($record, $tableDefinitionCollection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
@@ -57,8 +65,10 @@ final class RecordToArrayTest extends UnitTestCase
             'description' => null,
         ];
 
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new RecordToArray($record, $tableDefinitionCollection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
@@ -80,8 +90,10 @@ final class RecordToArrayTest extends UnitTestCase
             ],
         ];
 
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new RecordToArray($record, $tableDefinitionCollection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
@@ -99,8 +111,10 @@ final class RecordToArrayTest extends UnitTestCase
             'created' => $dateTime->format(\DateTimeImmutable::W3C),
         ];
 
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new RecordToArray($record, $tableDefinitionCollection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
@@ -112,8 +126,10 @@ final class RecordToArrayTest extends UnitTestCase
     {
         $record = [];
 
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new RecordToArray($record, $tableDefinitionCollection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
@@ -132,8 +148,10 @@ final class RecordToArrayTest extends UnitTestCase
             'price' => 19.99,
         ];
 
+        $tableDefinition = $this->createMock(TableDefinition::class);
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
-        $subject = new RecordToArray($record, $tableDefinitionCollection, $tableDefinitionCollection);
+        $eventDispatcher = new EventDispatcher($this->createMock(ListenerProviderInterface::class));
+        $subject = new RecordToArray($record, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
 
         $result = $subject->toArray();
 
