@@ -45,8 +45,5 @@ class FileReferenceToArray
         ];
     }
 
-    protected static function getImageService(): ImageService
-    {
-        return GeneralUtility::makeInstance(ImageService::class);
-    }
+
 }
