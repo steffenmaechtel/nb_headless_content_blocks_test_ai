@@ -7,8 +7,23 @@ namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray
 use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\ArrayRecursiveToArray;
 use Netzbewegung\NbHeadlessContentBlocks\Event\ModifyArrayRecursiveToArrayEvent;
 use Psr\EventDispatcher\ListenerProviderInterface;
+use TYPO3\CMS\ContentBlocks\Definition\Capability\TableDefinitionCapability;
+use TYPO3\CMS\ContentBlocks\Definition\ContentType\ContentType;
+use TYPO3\CMS\ContentBlocks\Definition\ContentType\ContentTypeDefinitionCollection;
+use TYPO3\CMS\ContentBlocks\Definition\PaletteDefinitionCollection;
+use TYPO3\CMS\ContentBlocks\Definition\SqlColumnDefinitionCollection;
+use TYPO3\CMS\ContentBlocks\Definition\TableDefinition;
 use TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection;
+use TYPO3\CMS\ContentBlocks\Definition\TcaFieldDefinition;
+use TYPO3\CMS\ContentBlocks\Definition\TcaFieldDefinitionCollection;
+use TYPO3\CMS\ContentBlocks\FieldType\CategoryFieldType;
+use TYPO3\CMS\ContentBlocks\FieldType\FieldTypeInterface;
+use TYPO3\CMS\ContentBlocks\FieldType\JsonFieldType;
+use TYPO3\CMS\ContentBlocks\FieldType\PasswordFieldType;
+use TYPO3\CMS\ContentBlocks\FieldType\TextareaFieldType;
+use TYPO3\CMS\ContentBlocks\FieldType\TextFieldType;
 use TYPO3\CMS\ContentBlocks\Registry\AutomaticLanguageKeysRegistry;
+use TYPO3\CMS\Core\Domain\FlexFormFieldValues;
 use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
@@ -116,6 +131,86 @@ final class ArrayRecursiveToArrayTest extends UnitTestCase
         self::assertSame([['myKey', 'myValue']], $receivedEvents);
     }
 
+    public function testTextFieldPassesThrough(): void
+    {
+        $subject = $this->createSubjectWithField('text', $this->initFieldType(new TextFieldType()), 'value');
+
+        self::assertSame(['text' => 'value'], $subject->toArray());
+    }
+
+    public function testPasswordFieldTypeValueIsEmptied(): void
+    {
+        $subject = $this->createSubjectWithField('password', $this->initFieldType(new PasswordFieldType()), 'secret');
+
+        self::assertSame(['password' => ''], $subject->toArray());
+    }
+
+    public function testTextareaFieldWithoutRichtextPassesThrough(): void
+    {
+        $subject = $this->createSubjectWithField(
+            'text',
+            $this->initFieldType((new TextareaFieldType())->createFromArray([])),
+            'hello world'
+        );
+
+        self::assertSame(['text' => 'hello world'], $subject->toArray());
+    }
+
+    public function testJsonFieldTypeArrayIsPassedThroughRaw(): void
+    {
+        $subject = $this->createSubjectWithField(
+            'json',
+            $this->initFieldType(new JsonFieldType()),
+            ['keep' => true, 'nested' => ['flag' => false]]
+        );
+
+        self::assertSame(
+            ['json' => ['keep' => true, 'nested' => ['flag' => false]]],
+            $subject->toArray()
+        );
+    }
+
+    public function testFlexFormFieldValuesIsConverted(): void
+    {
+        $subject = $this->createSubject(['flex' => new FlexFormFieldValues(['sheet' => ['a' => 'b']])]);
+
+        self::assertSame(['flex' => ['sheet' => ['a' => 'b']]], $subject->toArray());
+    }
+
+    public function testUnknownObjectTypeIsDropped(): void
+    {
+        $subject = $this->createSubject(['obj' => new \stdClass()]);
+
+        self::assertSame([], $subject->toArray());
+    }
+
+    public function testGetTableNameByKeyReturnsForeignTable(): void
+    {
+        $method = $this->getTableNameByKeyMethod(
+            $this->createTableDefinitionWithField('rel', $this->fakeFieldType(['config' => ['foreign_table' => 'tx_foreign']]))
+        );
+
+        self::assertSame('tx_foreign', $method('rel'));
+    }
+
+    public function testGetTableNameByKeyReturnsNullForMultipleAllowedTables(): void
+    {
+        $method = $this->getTableNameByKeyMethod(
+            $this->createTableDefinitionWithField('rel', $this->fakeFieldType(['config' => ['allowed' => 'a,b']]))
+        );
+
+        self::assertNull($method('rel'));
+    }
+
+    public function testGetTableNameByKeyReturnsSysCategoryForCategoryField(): void
+    {
+        $method = $this->getTableNameByKeyMethod(
+            $this->createTableDefinitionWithField('cat', $this->initFieldType(new CategoryFieldType()))
+        );
+
+        self::assertSame('sys_category', $method('cat'));
+    }
+
     /**
      * @param callable[] $listeners
      */
@@ -129,6 +224,110 @@ final class ArrayRecursiveToArrayTest extends UnitTestCase
             $tableDefinitionCollection,
             $this->createEventDispatcher($listeners)
         );
+    }
+
+    private function createSubjectWithField(string $fieldName, FieldTypeInterface $fieldType, mixed $value): ArrayRecursiveToArray
+    {
+        $tableDefinition = $this->createTableDefinitionWithField($fieldName, $fieldType);
+
+        return new ArrayRecursiveToArray(
+            [$fieldName => $value],
+            $tableDefinition,
+            new TableDefinitionCollection(new AutomaticLanguageKeysRegistry()),
+            $this->createEventDispatcher([])
+        );
+    }
+
+    private function createTableDefinitionWithField(string $fieldName, FieldTypeInterface $fieldType): TableDefinition
+    {
+        $tcaFieldCollection = new TcaFieldDefinitionCollection();
+        $tcaFieldCollection->addField(new TcaFieldDefinition(
+            ContentType::RECORD_TYPE,
+            'tt_content',
+            $fieldName,
+            $fieldName,
+            'label',
+            '',
+            '',
+            false,
+            $fieldType
+        ));
+
+        return new TableDefinition(
+            'tt_content',
+            TableDefinitionCapability::createFromArray([]),
+            null,
+            ContentType::RECORD_TYPE,
+            new ContentTypeDefinitionCollection(),
+            new SqlColumnDefinitionCollection(),
+            $tcaFieldCollection,
+            new PaletteDefinitionCollection(),
+            []
+        );
+    }
+
+    /**
+     * @return \Closure(string):mixed
+     */
+    private function getTableNameByKeyMethod(TableDefinition $tableDefinition): \Closure
+    {
+        $subject = new ArrayRecursiveToArray(
+            [],
+            $tableDefinition,
+            new TableDefinitionCollection(new AutomaticLanguageKeysRegistry()),
+            $this->createEventDispatcher([])
+        );
+
+        $reflection = new \ReflectionMethod($subject, 'getTableNameByKey');
+        $reflection->setAccessible(true);
+
+        return static function (string $key) use ($subject, $reflection): mixed {
+            return $reflection->invoke($subject, $key);
+        };
+    }
+
+    private function initFieldType(FieldTypeInterface $fieldType): FieldTypeInterface
+    {
+        $fieldType->setName('test');
+        $fieldType->setTcaType('test');
+
+        return $fieldType;
+    }
+
+    private function fakeFieldType(array $tca): FieldTypeInterface
+    {
+        return new class ($tca) implements FieldTypeInterface {
+            public function __construct(private readonly array $tca) {}
+
+            public function getName(): string
+            {
+                return 'fake';
+            }
+
+            public function getTcaType(): string
+            {
+                return 'input';
+            }
+
+            public function setName(string $name): void {}
+
+            public function setTcaType(string $tcaType): void {}
+
+            public function createFromArray(array $settings): FieldTypeInterface
+            {
+                return $this;
+            }
+
+            public function getTca(): array
+            {
+                return $this->tca;
+            }
+
+            public function getSql(string $column): string
+            {
+                return '';
+            }
+        };
     }
 
     /**
