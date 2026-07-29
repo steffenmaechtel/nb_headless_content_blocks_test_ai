@@ -6,6 +6,9 @@ namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\Event;
 
 use Netzbewegung\NbHeadlessContentBlocks\Event\ModifyArrayRecursiveToArrayEvent;
 use PHPUnit\Framework\TestCase;
+use TYPO3\CMS\ContentBlocks\Definition\ContentType\ContentType;
+use TYPO3\CMS\ContentBlocks\Definition\TcaFieldDefinition;
+use TYPO3\CMS\ContentBlocks\FieldType\TextFieldType;
 
 final class ModifyArrayRecursiveToArrayEventTest extends TestCase
 {
@@ -84,5 +87,33 @@ final class ModifyArrayRecursiveToArrayEventTest extends TestCase
 
         self::assertTrue($event->isHandled());
         self::assertNull($event->getProcessedValue());
+    }
+
+    public function testGetTcaFieldDefinitionReturnsDefinition(): void
+    {
+        $fieldDefinition = new TcaFieldDefinition(
+            ContentType::CONTENT_ELEMENT,
+            'field',
+            'field',
+            '',
+            '',
+            '',
+            false,
+            new TextFieldType()
+        );
+        $event = new ModifyArrayRecursiveToArrayEvent('key', 'value', $fieldDefinition);
+
+        self::assertSame($fieldDefinition, $event->getTcaFieldDefinition());
+    }
+
+    public function testLatestProcessedValueIsReturned(): void
+    {
+        $event = new ModifyArrayRecursiveToArrayEvent('key', 'value', null);
+
+        $event->setProcessedValue('first');
+        $event->setProcessedValue('second');
+
+        self::assertTrue($event->isHandled());
+        self::assertSame('second', $event->getProcessedValue());
     }
 }

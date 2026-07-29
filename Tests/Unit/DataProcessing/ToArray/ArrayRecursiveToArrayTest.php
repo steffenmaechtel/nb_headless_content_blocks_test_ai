@@ -23,6 +23,8 @@ use TYPO3\CMS\ContentBlocks\FieldType\TextareaFieldType;
 use TYPO3\CMS\ContentBlocks\FieldType\TextFieldType;
 use TYPO3\CMS\ContentBlocks\Registry\AutomaticLanguageKeysRegistry;
 use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class ArrayRecursiveToArrayTest extends UnitTestCase
@@ -198,6 +200,29 @@ final class ArrayRecursiveToArrayTest extends UnitTestCase
         self::assertSame(['body' => '<strong>visible</strong>'], $subject->toArray());
     }
 
+    public function testRichTextTextareaIsParsed(): void
+    {
+        $contentObjectRenderer = $this->createMock(ContentObjectRenderer::class);
+        $contentObjectRenderer->expects($this->once())
+            ->method('parseFunc')
+            ->with('<strong>source</strong>', null, '< lib.parseFunc_RTE')
+            ->willReturn('<p>parsed</p>');
+        GeneralUtility::addInstance(ContentObjectRenderer::class, $contentObjectRenderer);
+
+        $subject = $this->createSubject(
+            ['body' => '<strong>source</strong>'],
+            tableDefinition: $this->createTableDefinition(
+                $this->createFieldDefinition(
+                    'body',
+                    'body',
+                    $this->createTextareaFieldType(true)
+                )
+            )
+        );
+
+        self::assertSame(['body' => '<p>parsed</p>'], $subject->toArray());
+    }
+
     /**
      * @param callable[] $listeners
      */
@@ -253,9 +278,9 @@ final class ArrayRecursiveToArrayTest extends UnitTestCase
         );
     }
 
-    private function createTextareaFieldType(): TextareaFieldType
+    private function createTextareaFieldType(bool $enableRichtext = false): TextareaFieldType
     {
-        $fieldType = (new TextareaFieldType())->createFromArray([]);
+        $fieldType = (new TextareaFieldType())->createFromArray(['enableRichtext' => $enableRichtext]);
         $fieldType->setName('Textarea');
         $fieldType->setTcaType('text');
         $fieldType->setSearchable(true);
