@@ -27,4 +27,10 @@ final class TypolinkParameterToArrayTest extends TestCase
 
         self::assertNull($subject->toArray());
     }
+
+    /**
+     * Note: The successful link generation and UnableToLinkException paths
+     * cannot be tested in unit tests because TypoLinkCodecService is final
+     * and has no interface. These paths are covered by functional tests.
+     */
 }
