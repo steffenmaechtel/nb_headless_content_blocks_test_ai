@@ -95,10 +95,9 @@ final class LazyFolderCollectionToArrayTest extends UnitTestCase
 
     /**
      * A storage driver without a "basePath" configuration key (for example the
-     * TYPO3 default storage of a driver other than "Local") makes the unguarded
-     * array access in LazyFolderCollectionToArray raise a PHP warning.
+     * fallback storage or a remote driver) must not break the conversion.
      */
-    public function testMissingBasePathConfigurationRaisesWarning(): void
+    public function testMissingBasePathConfigurationFallsBackToIdentifierOnly(): void
     {
         $storage = $this->createMock(ResourceStorage::class);
         $storage->method('getConfiguration')->willReturn([]);
@@ -106,23 +105,7 @@ final class LazyFolderCollectionToArrayTest extends UnitTestCase
 
         $subject = new LazyFolderCollectionToArray($this->createCollection([$folder]));
 
-        $warnings = [];
-        set_error_handler(
-            static function (int $errno, string $errstr) use (&$warnings): bool {
-                $warnings[] = $errstr;
-                return true;
-            },
-            E_WARNING
-        );
-
-        try {
-            $result = $subject->toArray();
-        } finally {
-            restore_error_handler();
-        }
-
-        self::assertSame([0 => '/user_upload/'], $result);
-        self::assertSame(['Undefined array key "basePath"'], $warnings);
+        self::assertSame([0 => '/user_upload/'], $subject->toArray());
     }
 
     /**

@@ -282,17 +282,11 @@ final class ArrayRecursiveToArrayTest extends UnitTestCase
     }
 
     /**
-     * Documents a defect: processStringField() guards against integer keys via
-     * `is_int($key)`, but toArray() already passes the key to
-     * TcaFieldDefinitionCollection::hasField(), which only accepts strings.
-     * The guard in processStringField() is therefore unreachable and an integer
-     * key combined with a table definition raises a TypeError.
-     *
-     * This is currently not triggered in production because arrays are only
-     * combined with a table definition when they originate from
-     * Record::toArray(), which always yields string keys.
+     * Integer keys occur for list-like arrays. They can never match a TCA field
+     * and must therefore bypass both key de-prefixing and field type specific
+     * processing instead of being passed to the string-typed collection API.
      */
-    public function testIntegerKeyCombinedWithTableDefinitionThrowsTypeError(): void
+    public function testIntegerKeyCombinedWithTableDefinitionBypassesFieldTypeProcessing(): void
     {
         $tableDefinition = $this->createContentTableDefinition([
             $this->createTcaFieldDefinition('tt_content_secret', 'secret', $this->createFieldType(PasswordFieldType::class)),
@@ -300,10 +294,7 @@ final class ArrayRecursiveToArrayTest extends UnitTestCase
 
         $subject = $this->createSubject([0 => 'super-secret'], [], $tableDefinition);
 
-        $this->expectException(\TypeError::class);
-        $this->expectExceptionMessage('TcaFieldDefinitionCollection::hasField(): Argument #1 ($key) must be of type string, int given');
-
-        $subject->toArray();
+        self::assertSame([0 => 'super-secret'], $subject->toArray());
     }
 
     public function testIntegerKeyWithoutTableDefinitionBypassesFieldTypeProcessing(): void
@@ -311,6 +302,45 @@ final class ArrayRecursiveToArrayTest extends UnitTestCase
         $subject = $this->createSubject([0 => 'super-secret']);
 
         self::assertSame([0 => 'super-secret'], $subject->toArray());
+    }
+
+    /**
+     * A relation value nested inside a list-like array must not try to resolve a
+     * table definition from its integer key.
+     */
+    public function testRecordUnderIntegerKeyIsConvertedWithoutTableDefinition(): void
+    {
+        $collectionDefinition = $this->createCollectionTableDefinition();
+        $tableDefinition = $this->createContentTableDefinition([]);
+        $record = $this->createRecord(['tx_test_collection_headline' => 'Inner'], 'tx_test_collection');
+
+        $subject = $this->createSubject(
+            [0 => $record],
+            [],
+            $tableDefinition,
+            $this->createTableDefinitionCollection($tableDefinition, $collectionDefinition)
+        );
+
+        self::assertSame([0 => ['tx_test_collection_headline' => 'Inner']], $subject->toArray());
+    }
+
+    public function testLazyRecordCollectionUnderIntegerKeyIsConvertedWithoutTableDefinition(): void
+    {
+        $collectionDefinition = $this->createCollectionTableDefinition();
+        $tableDefinition = $this->createContentTableDefinition([]);
+        $collection = new LazyRecordCollection('', fn(): array => [
+            $this->createRecord(['tx_test_collection_headline' => 'Inner'], 'tx_test_collection'),
+        ]);
+
+        $subject = $this->createSubject(
+            [0 => $collection],
+            [],
+            $tableDefinition,
+            $this->createTableDefinitionCollection($tableDefinition, $collectionDefinition)
+        );
+
+        // Resolved per record from its main type by LazyRecordCollectionToArray.
+        self::assertSame([0 => [0 => ['headline' => 'Inner']]], $subject->toArray());
     }
 
     // --------------------------------------------------------------------

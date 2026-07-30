@@ -46,7 +46,7 @@ class ArrayRecursiveToArray
 
         foreach ($this->array as $key => $value) {
 
-            if ($this->tableDefinition instanceof TableDefinition && $this->tableDefinition->tcaFieldDefinitionCollection->hasField($key)) {
+            if ($this->tableDefinition instanceof TableDefinition && is_string($key) && $this->tableDefinition->tcaFieldDefinitionCollection->hasField($key)) {
                 $tcaFieldDefinition = $this->tableDefinition->tcaFieldDefinitionCollection->getField($key);
                 $decoratedKey = $tcaFieldDefinition->identifier;
             } else {
@@ -141,7 +141,7 @@ class ArrayRecursiveToArray
         return $data;
     }
 
-    protected function getTableDefinitionByKey(string $key): ?TableDefinition
+    protected function getTableDefinitionByKey(int|string $key): ?TableDefinition
     {
         $tableName = $this->getTableNameByKey($key);
 
@@ -156,8 +156,12 @@ class ArrayRecursiveToArray
         return null;
     }
 
-    protected function getTableNameByKey(string $key): ?string
+    protected function getTableNameByKey(int|string $key): ?string
     {
+        if (!is_string($key)) {
+            return null;
+        }
+
         if ($this->tableDefinitionCollection->hasTable($key)) {
             return $key;
         }

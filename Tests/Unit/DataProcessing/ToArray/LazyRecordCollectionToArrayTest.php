@@ -75,11 +75,13 @@ final class LazyRecordCollectionToArrayTest extends UnitTestCase
     }
 
     /**
-     * sys_category records are intentionally processed without a table definition.
+     * sys_category records are intentionally processed without a table definition,
+     * because Content Blocks does not register a definition for sys_category.
      *
-     * Note that ArrayRecursiveToArray routes sys_category collections to
-     * LazyRecordCollectionSysCategoryToArray, so this branch is currently not
-     * reachable through the regular DataProcessor flow.
+     * Reachable whenever no definition could be derived from the field, for
+     * example a Relation field with several allowed tables, one of them being
+     * sys_category. Without this branch such a collection would hit the
+     * exception below.
      */
     public function testSysCategoryRecordIsProcessedWithoutTableDefinition(): void
     {

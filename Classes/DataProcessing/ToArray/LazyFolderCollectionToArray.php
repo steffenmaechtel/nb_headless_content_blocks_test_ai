@@ -14,7 +14,9 @@ class LazyFolderCollectionToArray
     {
         $data = [];
         foreach ($this->lazyFolderCollection as $key => $value) {
-            $path = '/' . $value->getStorage()->getConfiguration()['basePath'] . ltrim((string)$value->getIdentifier(), '/');
+            // Storage drivers other than "Local" (and the fallback storage) have no base path.
+            $basePath = (string)($value->getStorage()->getConfiguration()['basePath'] ?? '');
+            $path = '/' . $basePath . ltrim((string)$value->getIdentifier(), '/');
             $data[$key] = $path;
         }
 
