@@ -6,14 +6,23 @@ namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray
 
 use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\ArrayRecursiveToArray;
 use Netzbewegung\NbHeadlessContentBlocks\Event\ModifyArrayRecursiveToArrayEvent;
+use Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\Support\ContentBlockFactoryTrait;
 use Psr\EventDispatcher\ListenerProviderInterface;
+use TYPO3\CMS\ContentBlocks\Definition\TableDefinition;
 use TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection;
+use TYPO3\CMS\ContentBlocks\Definition\TcaFieldDefinition;
+use TYPO3\CMS\ContentBlocks\FieldType\JsonFieldType;
+use TYPO3\CMS\ContentBlocks\FieldType\PasswordFieldType;
+use TYPO3\CMS\ContentBlocks\FieldType\TextFieldType;
 use TYPO3\CMS\ContentBlocks\Registry\AutomaticLanguageKeysRegistry;
+use TYPO3\CMS\Core\Domain\FlexFormFieldValues;
 use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class ArrayRecursiveToArrayTest extends UnitTestCase
 {
+    use ContentBlockFactoryTrait;
+
     public function testNullValueIsPassedThrough(): void
     {
         $subject = $this->createSubject(['key' => null]);
@@ -116,16 +125,117 @@ final class ArrayRecursiveToArrayTest extends UnitTestCase
         self::assertSame([['myKey', 'myValue']], $receivedEvents);
     }
 
+    public function testUnknownTypeIsDropped(): void
+    {
+        $subject = $this->createSubject(['key' => new \stdClass()]);
+
+        self::assertSame([], $subject->toArray());
+    }
+
+    public function testFlexFormFieldValuesAreConvertedViaToArray(): void
+    {
+        $flex = new FlexFormFieldValues(['sheet' => ['k' => 'v']]);
+
+        $subject = $this->createSubject(['flex' => $flex]);
+
+        self::assertSame(['flex' => ['sheet' => ['k' => 'v']]], $subject->toArray());
+    }
+
+    public function testPasswordFieldTypeValueIsBlanked(): void
+    {
+        $tableDefinition = $this->buildTableDefinition(['my_password' => new PasswordFieldType()]);
+
+        $subject = $this->createSubjectWithTableDefinition(
+            ['my_password' => 'super-secret'],
+            $tableDefinition
+        );
+
+        self::assertSame(['my_password' => ''], $subject->toArray());
+    }
+
+    public function testTextFieldTypeValueIsPassedThrough(): void
+    {
+        $tableDefinition = $this->buildTableDefinition(['my_text' => new TextFieldType()]);
+
+        $subject = $this->createSubjectWithTableDefinition(
+            ['my_text' => 'some text'],
+            $tableDefinition
+        );
+
+        self::assertSame(['my_text' => 'some text'], $subject->toArray());
+    }
+
+    public function testJsonFieldTypeArrayIsPassedThroughWithoutRecursion(): void
+    {
+        $tableDefinition = $this->buildTableDefinition(['my_json' => new JsonFieldType()]);
+
+        $payload = ['b' => 1, 'a' => 2, 'flag' => true];
+
+        $subject = $this->createSubjectWithTableDefinition(
+            ['my_json' => $payload],
+            $tableDefinition
+        );
+
+        // Without JsonFieldType the inner array would be recursed (sorted, bool dropped).
+        self::assertSame(['my_json' => $payload], $subject->toArray());
+    }
+
+    public function testDecoratedKeyIsUsedWhenTcaFieldExists(): void
+    {
+        $tableDefinition = $this->buildTableDefinitionFromDefinitions([
+            $this->buildTcaFieldDefinition('decorated_key', 'raw_key', new TextFieldType()),
+        ]);
+
+        $subject = $this->createSubjectWithTableDefinition(
+            ['raw_key' => 'value'],
+            $tableDefinition
+        );
+
+        self::assertSame(['decorated_key' => 'value'], $subject->toArray());
+    }
+
+    public function testEventReceivesTcaFieldDefinitionWhenFieldExists(): void
+    {
+        $tableDefinition = $this->buildTableDefinition(['my_text' => new TextFieldType()]);
+
+        $received = [];
+        $listener = static function (ModifyArrayRecursiveToArrayEvent $event) use (&$received): void {
+            $received[] = $event->getTcaFieldDefinition();
+        };
+
+        $subject = $this->createSubjectWithTableDefinition(
+            ['my_text' => 'value'],
+            $tableDefinition,
+            [$listener]
+        );
+        $subject->toArray();
+
+        self::assertCount(1, $received);
+        self::assertInstanceOf(TcaFieldDefinition::class, $received[0]);
+        self::assertSame('my_text', $received[0]->uniqueIdentifier);
+    }
+
     /**
      * @param callable[] $listeners
      */
     private function createSubject(array $array, array $listeners = []): ArrayRecursiveToArray
     {
+        return $this->createSubjectWithTableDefinition($array, null, $listeners);
+    }
+
+    /**
+     * @param callable[] $listeners
+     */
+    private function createSubjectWithTableDefinition(
+        array $array,
+        ?TableDefinition $tableDefinition,
+        array $listeners = []
+    ): ArrayRecursiveToArray {
         $tableDefinitionCollection = new TableDefinitionCollection(new AutomaticLanguageKeysRegistry());
 
         return new ArrayRecursiveToArray(
             $array,
-            null,
+            $tableDefinition,
             $tableDefinitionCollection,
             $this->createEventDispatcher($listeners)
         );
