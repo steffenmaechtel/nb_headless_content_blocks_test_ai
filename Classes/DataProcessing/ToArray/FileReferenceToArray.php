@@ -13,6 +13,11 @@ class FileReferenceToArray
 {
     public function __construct(protected FileReference $fileReference) {}
 
+    /**
+     * @param ImageService|null Optional image service for testing. If null, uses GeneralUtility::makeInstance().
+     */
+    protected ?ImageService $imageService = null;
+
     public function toArray(): array
     {
         // Check if editor has cropped the image in TYPO3 Backend
@@ -24,7 +29,6 @@ class FileReferenceToArray
         $cropVariantCollection = CropVariantCollection::create((string)$cropString);
         $cropArea = $cropVariantCollection->getCropArea('default');
 
-        $imageService = self::getImageService();
         if ($cropArea->isEmpty() === false) {
             $processingInstructions = [
                 'crop' => $cropArea->makeAbsoluteBasedOnFile($this->fileReference),
