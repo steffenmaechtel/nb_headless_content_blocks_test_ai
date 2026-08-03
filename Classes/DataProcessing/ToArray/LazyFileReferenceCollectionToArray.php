@@ -12,12 +12,22 @@ class LazyFileReferenceCollectionToArray
     public function __construct(protected LazyFileReferenceCollection $lazyFileReferenceCollection) {}
 
     public function toArray(): array
-    {
-        $data = [];
-        foreach ($this->lazyFileReferenceCollection as $key => $value) {
-            $data[$key] = GeneralUtility::makeInstance(FileReferenceToArray::class, $value)->toArray();
-        }
+        {
+            $data = [];
+            foreach ($this->lazyFileReferenceCollection as $key => $value) {
+                if (is_null($value)) {
+                    continue; // Skip null values in the collection
+                }
 
-        return $data;
-    }
+                $converterInstance = GeneralUtility::makeInstance(FileReferenceToArray::class, $value);
+                try {
+                    $data[$key] = $converterInstance->toArray();
+                } catch (\RuntimeException) {
+                    // ImageService may not be available - skip this entry
+                    continue;
+                }
+            }
+
+            return $data;
+        }
 }
