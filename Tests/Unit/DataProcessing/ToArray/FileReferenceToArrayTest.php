@@ -7,6 +7,7 @@ namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray
 use TYPO3\CMS\Core\Imaging\ImageManipulation\CropVariantCollection;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\FileReference;
+use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class FileReferenceToArrayTest extends UnitTestCase
@@ -19,12 +20,16 @@ final class FileReferenceToArrayTest extends UnitTestCase
         $file->method('getTitle')->willReturn('Image Title');
         $file->method('getPublicPath')->willReturn('/public/path/to/image.jpg');
 
+        $storage = $this->createMock(ResourceStorage::class);
+        $storage->method('getConfiguration')->willReturn(['basePath' => '/public/']);
+
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('getUid')->willReturn(456);
         $fileReference->method('getProperty')->with('crop')->willReturn('crop:100,200,300,400');
         $fileReference->method('hasProperty')->with('crop')->willReturn(true);
         $fileReference->method('getAlternative')->willReturn('Alt Text');
         $fileReference->method('getTitle')->willReturn('Image Title');
+        $fileReference->method('getStorage')->willReturn($storage);
 
         $converter = new FileReferenceToArray($fileReference);
         $result = $converter->toArray();
@@ -41,12 +46,16 @@ final class FileReferenceToArrayTest extends UnitTestCase
 
     public function testFileReferenceWithoutCropReturnsPublicUrl(): void
     {
+        $storage = $this->createMock(ResourceStorage::class);
+        $storage->method('getConfiguration')->willReturn(['basePath' => '/public/']);
+
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('getUid')->willReturn(789);
         $fileReference->method('getProperty')->with('crop')->willReturn('');
         $fileReference->method('hasProperty')->with('crop')->willReturn(false);
         $fileReference->method('getAlternative')->willReturn('No Alt');
         $fileReference->method('getTitle')->willReturn('No Title');
+        $fileReference->method('getStorage')->willReturn($storage);
 
         $converter = new FileReferenceToArray($fileReference);
         $result = $converter->toArray();
@@ -59,12 +68,16 @@ final class FileReferenceToArrayTest extends UnitTestCase
 
     public function testFileReferenceWithEmptyCropReturnsPublicUrl(): void
     {
+        $storage = $this->createMock(ResourceStorage::class);
+        $storage->method('getConfiguration')->willReturn(['basePath' => '/public/']);
+
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('getUid')->willReturn(101);
         $fileReference->method('getProperty')->with('crop')->willReturn('');
         $fileReference->method('hasProperty')->with('crop')->willReturn(true);
         $fileReference->method('getAlternative')->willReturn('Empty Alt');
         $fileReference->method('getTitle')->willReturn('Empty Title');
+        $fileReference->method('getStorage')->willReturn($storage);
 
         $converter = new FileReferenceToArray($fileReference);
         $result = $converter->toArray();
@@ -76,10 +89,14 @@ final class FileReferenceToArrayTest extends UnitTestCase
 
     public function testFileReferenceWithNullAltReturnsEmptyString(): void
     {
+        $storage = $this->createMock(ResourceStorage::class);
+        $storage->method('getConfiguration')->willReturn(['basePath' => '/public/']);
+
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('getUid')->willReturn(202);
         $fileReference->method('getAlternative')->willReturn(null);
         $fileReference->method('getTitle')->willReturn('Title Only');
+        $fileReference->method('getStorage')->willReturn($storage);
 
         $converter = new FileReferenceToArray($fileReference);
         $result = $converter->toArray();
@@ -90,10 +107,14 @@ final class FileReferenceToArrayTest extends UnitTestCase
 
     public function testFileReferenceWithNullTitleReturnsEmptyString(): void
     {
+        $storage = $this->createMock(ResourceStorage::class);
+        $storage->method('getConfiguration')->willReturn(['basePath' => '/public/']);
+
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('getUid')->willReturn(303);
         $fileReference->method('getAlternative')->willReturn('Alt');
         $fileReference->method('getTitle')->willReturn(null);
+        $fileReference->method('getStorage')->willReturn($storage);
 
         $converter = new FileReferenceToArray($fileReference);
         $result = $converter->toArray();

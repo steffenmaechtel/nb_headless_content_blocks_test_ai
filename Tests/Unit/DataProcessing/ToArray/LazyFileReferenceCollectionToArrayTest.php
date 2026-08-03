@@ -6,6 +6,7 @@ namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray
 
 use TYPO3\CMS\Core\Resource\Collection\LazyFileReferenceCollection;
 use TYPO3\CMS\Core\Resource\FileReference;
+use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
@@ -22,8 +23,14 @@ final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
         $fileReference2->method('getAlternative')->willReturn('Alt 2');
         $fileReference2->method('getTitle')->willReturn('Title 2');
 
+        $storage = $this->createMock(ResourceStorage::class);
+        $storage->method('getConfiguration')->willReturn(['basePath' => '/public/']);
+
+        $fileReference1->method('getStorage')->willReturn($storage);
+        $fileReference2->method('getStorage')->willReturn($storage);
+
         $lazyCollection = $this->createMock(LazyFileReferenceCollection::class);
-        $lazyCollection->method('__invoke')->willReturnOnConsecutiveCalls($fileReference1, $fileReference2);
+        $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([$fileReference1, $fileReference2]));
 
         $converter = new LazyFileReferenceCollectionToArray($lazyCollection);
         $result = $converter->toArray();
@@ -39,8 +46,11 @@ final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
 
     public function testEmptyLazyFileReferenceCollectionReturnsEmptyArray(): void
     {
+        $storage = $this->createMock(ResourceStorage::class);
+        $storage->method('getConfiguration')->willReturn(['basePath' => '/public/']);
+
         $lazyCollection = $this->createMock(LazyFileReferenceCollection::class);
-        $lazyCollection->method('__invoke')->willReturn(null);
+        $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([]));
 
         $converter = new LazyFileReferenceCollectionToArray($lazyCollection);
         $result = $converter->toArray();
@@ -55,8 +65,12 @@ final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
         $fileReference1->method('getAlternative')->willReturn('Alt 1');
         $fileReference1->method('getTitle')->willReturn('Title 1');
 
+        $storage = $this->createMock(ResourceStorage::class);
+        $storage->method('getConfiguration')->willReturn(['basePath' => '/public/']);
+        $fileReference1->method('getStorage')->willReturn($storage);
+
         $lazyCollection = $this->createMock(LazyFileReferenceCollection::class);
-        $lazyCollection->method('__invoke')->willReturnOnConsecutiveCalls($fileReference1, null);
+        $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([$fileReference1, null]));
 
         $converter = new LazyFileReferenceCollectionToArray($lazyCollection);
         $result = $converter->toArray();
