@@ -19,7 +19,7 @@ final class FileReferenceToArrayTest extends UnitTestCase
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('getUid')->willReturn(456);
         $fileReference->method('hasProperty')->with('crop')->willReturn(false);
-        $fileReference->method('getProperty')->will($this->throwException(\TYPO3\CMS\Core\Exception\InvalidDataStructureException::class));
+        $fileReference->method('getProperty')->will($this->returnCallback(function () { throw new \TYPO3\CMS\Core\Exception\InvalidDataStructureException(); }));
         $fileReference->method('getAlternative')->willReturn('Alt Text');
         $fileReference->method('getTitle')->willReturn('Image Title');
         $fileReference->method('getStorage')->willReturn($storage);
@@ -42,8 +42,10 @@ final class FileReferenceToArrayTest extends UnitTestCase
 
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('hasProperty')->with('crop')->willReturn(false);
-        $fileReference->method('getProperty')->will($this->throwException(\TYPO3\CMS\Core\Exception\InvalidDataStructureException::class));
+        $fileReference->method('getProperty')->will($this->returnCallback(function () { throw new \TYPO3\CMS\Core\Exception\InvalidDataStructureException(); }));
         $fileReference->method('getUid')->willReturn(123);
+        $fileReference->method('hasProperty')->with('crop')->willReturn(false);
+        $fileReference->method('getProperty')->will($this->returnCallback(function () { throw new \TYPO3\CMS\Core\Exception\InvalidDataStructureException(); }));
         $fileReference->method('getAlternative')->willReturn('Alt Text');
         $fileReference->method('getTitle')->willReturn('Image Title');
         $fileReference->method('getStorage')->willReturn($storage);
@@ -65,6 +67,8 @@ final class FileReferenceToArrayTest extends UnitTestCase
         $fileReference->method('hasProperty')->with('crop')->willReturn(true);
         $fileReference->method('getProperty')->will($this->returnCallback(function () use ($cropString) { return $cropString; }));
         $fileReference->method('getUid')->willReturn(123);
+        $fileReference->method('hasProperty')->with('crop')->willReturn(false);
+        $fileReference->method('getProperty')->will($this->returnCallback(function () { throw new \TYPO3\CMS\Core\Exception\InvalidDataStructureException(); }));
         $fileReference->method('getAlternative')->willReturn('Alt Text');
         $fileReference->method('getTitle')->willReturn('Image Title');
         $fileReference->method('getStorage')->willReturn($storage);
@@ -82,7 +86,7 @@ final class FileReferenceToArrayTest extends UnitTestCase
 
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('hasProperty')->with('crop')->willReturn(false);
-        $fileReference->method('getProperty')->will($this->throwException(\TYPO3\CMS\Core\Exception\InvalidDataStructureException::class));
+        $fileReference->method('getProperty')->will($this->returnCallback(function () { throw new \TYPO3\CMS\Core\Exception\InvalidDataStructureException(); }));
         $fileReference->method('getUid')->willReturn(123);
         $fileReference->method('getAlternative')->willReturn(null);
         $fileReference->method('getTitle')->willReturn('Image Title');
@@ -101,7 +105,7 @@ final class FileReferenceToArrayTest extends UnitTestCase
 
         $fileReference = $this->createMock(FileReference::class);
         $fileReference->method('hasProperty')->with('crop')->willReturn(false);
-        $fileReference->method('getProperty')->will($this->throwException(\TYPO3\CMS\Core\Exception\InvalidDataStructureException::class));
+        $fileReference->method('getProperty')->will($this->returnCallback(function () { throw new \TYPO3\CMS\Core\Exception\InvalidDataStructureException(); }));
         $fileReference->method('getUid')->willReturn(123);
         $fileReference->method('getAlternative')->willReturn('Alt Text');
         $fileReference->method('getTitle')->willReturn(null);
