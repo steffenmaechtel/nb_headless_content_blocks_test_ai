@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray;
 
-use TYPO3\CMS\ContentBlocks\Definition\TableDefinition;
+use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\LazyRecordCollectionToArray;
 use TYPO3\CMS\ContentBlocks\Definition\TableDefinitionCollection;
-use TYPO3\CMS\Core\Collection\LazyRecordCollection;
-use TYPO3\CMS\Core\Domain\Record;
+use TYPO3\CMS\Core\Collection\LazyRecordCollection as CoreLazyRecordCollection;
 use TYPO3\CMS\Core\Domain\RawRecord;
-use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
+use TYPO3\CMS\Core\Domain\Record;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class LazyRecordCollectionToArrayTest extends UnitTestCase
@@ -30,14 +29,20 @@ final class LazyRecordCollectionToArrayTest extends UnitTestCase
         $record2->method('getRawRecord')->willReturn($rawRecord2);
         $record2->method('toArray')->willReturn(['title' => 'Record 2', 'bodytext' => 'Body 2']);
 
-        $lazyCollection = $this->createMock(LazyRecordCollection::class);
+        $tableDefinition = null; // Will be auto-resolved based on table name in the collection
+        $tableDefCollection = new TableDefinitionCollection(new \TYPO3\CMS\ContentBlocks\Registry\AutomaticLanguageKeysRegistry());
+
+        $eventDispatcherMock = $this->createMock(\TYPO3\CMS\Core\EventDispatcher\EventDispatcher::class);
+
+        $lazyCollection = $this->createMock(CoreLazyRecordCollection::class);
         $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([$record1, $record2]));
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
-        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
-        $eventDispatcher = $this->createMock(EventDispatcher::class);
-
-        $converter = new LazyRecordCollectionToArray($lazyCollection, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
+        $converter = new LazyRecordCollectionToArray(
+            $lazyCollection,
+            $tableDefinition,
+            $tableDefCollection,
+            $eventDispatcherMock
+        );
         $result = $converter->toArray();
 
         self::assertCount(2, $result);
@@ -51,14 +56,20 @@ final class LazyRecordCollectionToArrayTest extends UnitTestCase
 
     public function testEmptyLazyRecordCollectionReturnsEmptyArray(): void
     {
-        $lazyCollection = $this->createMock(LazyRecordCollection::class);
+        $tableDefinition = null; // Will be auto-resolved based on table name in the collection
+        $tableDefCollection = new TableDefinitionCollection(new \TYPO3\CMS\ContentBlocks\Registry\AutomaticLanguageKeysRegistry());
+
+        $eventDispatcherMock = $this->createMock(\TYPO3\CMS\Core\EventDispatcher\EventDispatcher::class);
+
+        $lazyCollection = $this->createMock(CoreLazyRecordCollection::class);
         $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([]));
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
-        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
-        $eventDispatcher = $this->createMock(EventDispatcher::class);
-
-        $converter = new LazyRecordCollectionToArray($lazyCollection, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
+        $converter = new LazyRecordCollectionToArray(
+            $lazyCollection,
+            $tableDefinition,
+            $tableDefCollection,
+            $eventDispatcherMock
+        );
         $result = $converter->toArray();
 
         self::assertEmpty($result);
@@ -73,14 +84,20 @@ final class LazyRecordCollectionToArrayTest extends UnitTestCase
         $record1->method('getRawRecord')->willReturn($rawRecord1);
         $record1->method('toArray')->willReturn(['title' => 'Record 1']);
 
-        $lazyCollection = $this->createMock(LazyRecordCollection::class);
+        $tableDefinition = null; // Will be auto-resolved based on table name in the collection
+        $tableDefCollection = new TableDefinitionCollection(new \TYPO3\CMS\ContentBlocks\Registry\AutomaticLanguageKeysRegistry());
+
+        $eventDispatcherMock = $this->createMock(\TYPO3\CMS\Core\EventDispatcher\EventDispatcher::class);
+
+        $lazyCollection = $this->createMock(CoreLazyRecordCollection::class);
         $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([$record1, null]));
 
-        $tableDefinition = $this->createMock(TableDefinition::class);
-        $tableDefinitionCollection = $this->createMock(TableDefinitionCollection::class);
-        $eventDispatcher = $this->createMock(EventDispatcher::class);
-
-        $converter = new LazyRecordCollectionToArray($lazyCollection, $tableDefinition, $tableDefinitionCollection, $eventDispatcher);
+        $converter = new LazyRecordCollectionToArray(
+            $lazyCollection,
+            $tableDefinition,
+            $tableDefCollection,
+            $eventDispatcherMock
+        );
         $result = $converter->toArray();
 
         self::assertCount(2, $result);
