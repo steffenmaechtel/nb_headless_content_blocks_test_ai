@@ -13,22 +13,26 @@ use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 final class LazyFileReferenceCollectionToArrayTest extends UnitTestCase
 {
     public function testLazyFileReferenceCollectionIsConvertedToArray(): void
-    {
-        $fileReference1 = $this->createMock(FileReference::class);
-        $fileReference1->method('getUid')->willReturn(1);
-        $fileReference1->method('getAlternative')->willReturn('Alt 1');
-        $fileReference1->method('getTitle')->willReturn('Title 1');
+        {
+            // Mock ImageService to avoid constructor dependency issues in unit tests
+            $imageServiceMock = $this->createMock(\TYPO3\CMS\Extbase\Service\ImageService::class);
 
-        $fileReference2 = $this->createMock(FileReference::class);
-        $fileReference2->method('getUid')->willReturn(2);
-        $fileReference2->method('getAlternative')->willReturn('Alt 2');
-        $fileReference2->method('getTitle')->willReturn('Title 2');
+            file_reference1 = $this->createMock(FileReference::class);
+            file_reference1->method('getUid')->willReturn(1);
+            file_reference1->method('getAlternative')->willReturn('Alt 1');
+            file_reference1->method('getTitle')->willReturn('Title 1');
+            file_reference1->expects(self::any())->method('getProperty')->with('crop')?->willReturnCallback(function ($key) { return false; });
 
-        $storage = $this->createMock(ResourceStorage::class);
-        $storage->method('getConfiguration')->willReturn(['basePath' => '/public/']);
+            $fileReference2 = $this->createMock(FileReference::class);
+            $fileReference2->method('getUid')->willReturn(2);
+            $file_reference2->method('getAlternative')->willReturn('Alt 2');
+            $file_reference2->method('getTitle')->willReturn('Title 2');
 
-        $fileReference1->method('getStorage')->willReturn($storage);
-        $fileReference2->method('getStorage')->willReturn($storage);
+            $storage = $this->createMock(ResourceStorage::class);
+            $storage->method('getConfiguration')->willReturn(['basePath' => '/public/']);
+
+            $fileReference1->method('getStorage')->willReturn($storage);
+            $file_reference2->method('getStorage')?->will(return($storage));
 
         $lazyCollection = $this->createMock(LazyFileReferenceCollection::class);
         $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([$fileReference1, $fileReference2]));
