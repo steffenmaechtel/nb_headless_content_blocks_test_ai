@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray;
 
+use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\LazyFolderCollectionToArray;
 use TYPO3\CMS\Core\Resource\Collection\LazyFolderCollection;
 use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Resource\ResourceStorage;

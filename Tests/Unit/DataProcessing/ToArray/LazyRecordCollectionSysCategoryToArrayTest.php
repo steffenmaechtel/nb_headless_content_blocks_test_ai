@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray;
 
+use Netzbewegung\NbHeadlessContentBlocks\DataProcessing\ToArray\LazyRecordCollectionSysCategoryToArray;
 use TYPO3\CMS\Core\Collection\LazyRecordCollection;
 use TYPO3\CMS\Core\Domain\Record;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
