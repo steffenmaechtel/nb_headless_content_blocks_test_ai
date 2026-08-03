@@ -19,7 +19,7 @@ final class LazyRecordCollectionSysCategoryToArrayTest extends UnitTestCase
         $record2->method('toArray')->willReturn(['uid' => 3, 'pid' => 2, 'title' => 'Category 2', 'description' => 'Desc 2']);
 
         $lazyCollection = $this->createMock(LazyRecordCollection::class);
-        $lazyCollection->method('__invoke')->willReturnOnConsecutiveCalls($record1, $record2);
+        $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([$record1, $record2]));
 
         $converter = new LazyRecordCollectionSysCategoryToArray($lazyCollection);
         $result = $converter->toArray();
@@ -43,7 +43,7 @@ final class LazyRecordCollectionSysCategoryToArrayTest extends UnitTestCase
     public function testEmptyLazyRecordCollectionSysCategoryReturnsEmptyArray(): void
     {
         $lazyCollection = $this->createMock(LazyRecordCollection::class);
-        $lazyCollection->method('__invoke')->willReturn(null);
+        $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([]));
 
         $converter = new LazyRecordCollectionSysCategoryToArray($lazyCollection);
         $result = $converter->toArray();
@@ -57,7 +57,7 @@ final class LazyRecordCollectionSysCategoryToArrayTest extends UnitTestCase
         $record1->method('toArray')->willReturn(['uid' => 1, 'pid' => 2, 'title' => 'Category 1']);
 
         $lazyCollection = $this->createMock(LazyRecordCollection::class);
-        $lazyCollection->method('__invoke')->willReturnOnConsecutiveCalls($record1, null);
+        $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([$record1, null]));
 
         $converter = new LazyRecordCollectionSysCategoryToArray($lazyCollection);
         $result = $converter->toArray();
