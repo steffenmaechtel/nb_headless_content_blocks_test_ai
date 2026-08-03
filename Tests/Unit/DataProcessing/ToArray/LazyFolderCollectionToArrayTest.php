@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Netzbewegung\NbHeadlessContentBlocks\Tests\Unit\DataProcessing\ToArray;
 
 use TYPO3\CMS\Core\Resource\Collection\LazyFolderCollection;
-use TYPO3\CMS\Core\Resource\StorageRepository;
+use TYPO3\CMS\Core\Resource\Folder;
+use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class LazyFolderCollectionToArrayTest extends UnitTestCase
@@ -13,24 +14,22 @@ final class LazyFolderCollectionToArrayTest extends UnitTestCase
     public function testLazyFolderCollectionIsConvertedToArray(): void
     {
         $storageConfig = ['basePath' => '/public/'];
-        $storage1 = $this->createMock(\TYPO3\CMS\Core\Resource\Storage::class);
+        $storage1 = $this->createMock(ResourceStorage::class);
         $storage1->method('getConfiguration')->willReturn($storageConfig);
-        $storage1->method('getIdentifier')->willReturn('storage1');
 
-        $storage2 = $this->createMock(\TYPO3\CMS\Core\Resource\Storage::class);
+        $storage2 = $this->createMock(ResourceStorage::class);
         $storage2->method('getConfiguration')->willReturn($storageConfig);
-        $storage2->method('getIdentifier')->willReturn('storage2');
 
-        $folder1 = $this->createMock(\TYPO3\CMS\Core\Resource\Folder::class);
+        $folder1 = $this->createMock(Folder::class);
         $folder1->method('getStorage')->willReturn($storage1);
         $folder1->method('getIdentifier')->willReturn('folder1');
 
-        $folder2 = $this->createMock(\TYPO3\CMS\Core\Resource\Folder::class);
+        $folder2 = $this->createMock(Folder::class);
         $folder2->method('getStorage')->willReturn($storage2);
         $folder2->method('getIdentifier')->willReturn('folder2');
 
         $lazyCollection = $this->createMock(LazyFolderCollection::class);
-        $lazyCollection->method('__invoke')->willReturnOnConsecutiveCalls($folder1, $folder2);
+        $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([$folder1, $folder2]));
 
         $converter = new LazyFolderCollectionToArray($lazyCollection);
         $result = $converter->toArray();
@@ -45,7 +44,7 @@ final class LazyFolderCollectionToArrayTest extends UnitTestCase
     public function testEmptyLazyFolderCollectionReturnsEmptyArray(): void
     {
         $lazyCollection = $this->createMock(LazyFolderCollection::class);
-        $lazyCollection->method('__invoke')->willReturn(null);
+        $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([]));
 
         $converter = new LazyFolderCollectionToArray($lazyCollection);
         $result = $converter->toArray();
@@ -56,16 +55,15 @@ final class LazyFolderCollectionToArrayTest extends UnitTestCase
     public function testLazyFolderCollectionWithNullValuesIsHandled(): void
     {
         $storageConfig = ['basePath' => '/public/'];
-        $storage1 = $this->createMock(\TYPO3\CMS\Core\Resource\Storage::class);
+        $storage1 = $this->createMock(ResourceStorage::class);
         $storage1->method('getConfiguration')->willReturn($storageConfig);
-        $storage1->method('getIdentifier')->willReturn('storage1');
 
-        $folder1 = $this->createMock(\TYPO3\CMS\Core\Resource\Folder::class);
+        $folder1 = $this->createMock(Folder::class);
         $folder1->method('getStorage')->willReturn($storage1);
         $folder1->method('getIdentifier')->willReturn('folder1');
 
         $lazyCollection = $this->createMock(LazyFolderCollection::class);
-        $lazyCollection->method('__invoke')->willReturnOnConsecutiveCalls($folder1, null);
+        $lazyCollection->method('getIterator')->willReturn(new \ArrayIterator([$folder1, null]));
 
         $converter = new LazyFolderCollectionToArray($lazyCollection);
         $result = $converter->toArray();
