@@ -34,6 +34,10 @@ and tools can reference them, e.g.:
 Re-run the command whenever Content Block definitions change — the
 schemas are derived from the same definitions the JSON conversion uses.
 
+How to deliver the generated files to their consumers (static files or
+the extension's opt-in HTTP endpoint):
+[Publish JSON Schema](publish-json-schema.md).
+
 ## What the schemas describe
 
 The schemas describe the **base contract** (see

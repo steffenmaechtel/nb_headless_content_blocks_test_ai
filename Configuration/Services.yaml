@@ -56,6 +56,12 @@ services:
 
   Netzbewegung\NbHeadlessContentBlocks\Schema\JsonSchemaGenerator: ~
 
+  Netzbewegung\NbHeadlessContentBlocks\Schema\SchemaEndpointConfiguration: ~
+
+  # middlewares are fetched from the container, so they must be public
+  Netzbewegung\NbHeadlessContentBlocks\Middleware\JsonSchemaEndpoint:
+    public: true
+
   Netzbewegung\NbHeadlessContentBlocks\Command\GenerateSchemaCommand:
     tags:
       - name: 'console.command'

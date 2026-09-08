@@ -24,8 +24,11 @@ Classes/
 ├── DataProcessing/
 │   ├── ContentBlocksJsonDataProcessor.php    # Main processor for Content Blocks
 │   └── ContainerJsonDataProcessor.php        # Processor for EXT:container
+├── Middleware/
+│   └── JsonSchemaEndpoint.php                # opt-in HTTP endpoint serving the schemas
 ├── Schema/
-│   └── JsonSchemaGenerator.php               # Content Block definitions -> JSON Schema (draft-07)
+│   ├── JsonSchemaGenerator.php               # Content Block definitions -> JSON Schema (draft-07)
+│   └── SchemaEndpointConfiguration.php       # ext config of the endpoint (enable/path)
 ├── FieldTransformer/
 │   ├── FieldValueTransformerChain.php
 │   ├── FieldValueTransformerInterface.php
@@ -53,6 +56,7 @@ Classes/
 Configuration/
 ├── Services.yaml                             # tagged services: nb_headless.normalizer,
 │                                             # nb_headless.field_value_transformer
+├── RequestMiddlewares.php                    # registers the JSON Schema endpoint
 └── Sets/HeadlessContentBlock/
     ├── setup.typoscript
     └── config.yaml
@@ -182,6 +186,8 @@ Tests/
 ├── Unit/
 │   ├── Event/
 │   │   └── ModifyArrayRecursiveToArrayEventTest.php
+│   ├── Schema/
+│   │   └── SchemaEndpointConfigurationTest.php
 │   └── Normalization/
 │       ├── RecordArrayBuilderTest.php
 │       └── Normalizer/
@@ -194,9 +200,18 @@ Tests/
 │   │   └── Fixtures/
 │   │       ├── DataSet/ (CSV fixtures)
 │   │       └── Files/ (test images)
+│   ├── Schema/
+│   │   ├── JsonSchemaGeneratorTest.php
+│   │   ├── JsonSchemaContractTest.php                # fixture outputs validated
+│   │   │                                             # against generated schemas
+│   │   ├── CommittedSchemaArtifactTest.php           # committed combined schema
+│   │   │                                             # must match the generator (drift guard,
+│   │   │                                             # rewrites the file on mismatch)
+│   │   └── Fixtures/content-blocks.schema.json       # committed artifact
 │   └── Frontend/
 │       ├── ContentBlocksJsonResponseTest.php           # e2e: full frontend request,
 │       │                                               # headless page JSON frozen (issue #18)
+│       ├── JsonSchemaEndpointTest.php                  # e2e: opt-in schema HTTP endpoint
 │       └── Fixtures/DataSet/e2e_page.csv               # pages row of the e2e site
 └── Fixtures/Extensions/test_nb_headless_content_blocks/
     ├── Configuration/Sets/TestFrontend/                 # fixture site set: maps test

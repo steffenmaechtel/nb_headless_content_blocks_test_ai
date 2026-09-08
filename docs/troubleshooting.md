@@ -138,3 +138,39 @@ content query as well.
 
 **Fix:** add the exclusion and map the columns via `nb-container-json` —
 see [Render containers](how-to/render-containers.md).
+
+## The schema endpoint answers with a 404 page instead of JSON
+
+**Symptom:** `https://cms.example.org/api/schema/content-blocks.schema.json`
+returns the site's 404 page (or the homepage), not a JSON schema.
+
+**Cause:** the endpoint is **disabled by default**. Requests outside the
+configured path are passed through to regular page routing — an enabled
+endpoint with the wrong path looks the same.
+
+**Fix:** enable it in the extension configuration and check the path:
+
+```php
+'EXTENSIONS' => [
+    'nb_headless_content_blocks' => [
+        'schemaEndpoint' => [
+            'enable' => '1',
+            'path' => '/api/schema',
+        ],
+    ],
+],
+```
+
+Clear the configuration cache after changing extension settings. See
+[Publish JSON Schema](how-to/publish-json-schema.md).
+
+## The schema endpoint answers with 405 Method Not Allowed
+
+**Symptom:** a request to the schema endpoint returns
+`405` with `Allow: GET, HEAD`.
+
+**Cause:** the endpoint only serves `GET`/`HEAD` requests — `POST` and
+friends are rejected to make caching semantics unambiguous.
+
+**Fix:** fetch the schemas read-only. They are regenerated on demand; do
+not try to submit anything to the endpoint.

@@ -1,0 +1,5 @@
+# cat=schema endpoint/enable/10; type=boolean; label=Enable the JSON Schema endpoint: Serve the generated JSON Schemas over HTTP. Disabled by default - enable it only where the content model may be public (staging, internal environments).
+schemaEndpoint.enable = 0
+
+# cat=schema endpoint/enable/20; type=string; label=Endpoint path: Absolute path the schemas are served under, e.g. /api/schema. Independent of the site base.
+schemaEndpoint.path = /api/schema

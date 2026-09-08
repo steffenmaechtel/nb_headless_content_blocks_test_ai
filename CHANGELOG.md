@@ -10,6 +10,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+Phase 2 of the JSON Schema delivery (see
+`docs/design/json_schema_generation.md`, issue #22). The JSON output
+contract is unchanged.
+
+### Added
+
+- Opt-in HTTP endpoint serving the generated JSON Schemas:
+  `JsonSchemaEndpoint` middleware (index, combined and per-Content-Block
+  schema, `ETag`/`304`, `405` for non-`GET`/`HEAD`). Disabled by default,
+  configured via the extension settings `schemaEndpoint.enable` and
+  `schemaEndpoint.path` (default `/api/schema`); the path is independent
+  of site bases because the middleware runs before site resolution.
+- Committed schema artifact
+  (`Tests/Functional/Schema/Fixtures/content-blocks.schema.json`) with a
+  drift-guard test that rewrites and fails when the generator output
+  changes.
+- Documentation: [Publish JSON Schema](docs/how-to/publish-json-schema.md)
+  how-to (static files vs. endpoint, `$id` strategy, security notes),
+  endpoint troubleshooting entries.
+
+### Changed
+
+- `JsonSchemaGenerator` emits the combined schema with sorted `oneOf`
+  branches, sorted `definitions` and sorted Content Block type names, so
+  generated artifacts are byte-stable across environments.
+
 ## [0.1.0] - 2026-09-04
 
 Rewrite of the ToArray conversion (see `docs/design/improve_to_array.md`).

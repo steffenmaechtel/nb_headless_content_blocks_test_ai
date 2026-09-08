@@ -1,12 +1,19 @@
 # Design: Automatically generate JSON Schema
 
-> Status: **PHASE 1 IMPLEMENTED (2026-09-05)** — `JsonSchemaGenerator`,
+> Status: **PHASES 1–2 IMPLEMENTED (2026-09-08)** — `JsonSchemaGenerator`,
 > the `nbheadlesscontentblocks:generate-schema` command and the schema
-> contract tests are shipped (issue #22). Phases 2–3 remain open. This is
-> a historical design record; where wording differs from the code, **the
-> code wins** — notably the implementation emits **draft-07** with
-> `definitions` (instead of the 2020-12/`$defs` sketch below) for the
-> widest tool support.
+> contract tests are shipped (issue #22, phase 1), together with the
+> phase 2 delivery: the opt-in JSON Schema HTTP endpoint
+> (`JsonSchemaEndpoint` middleware, see
+> [Publish JSON Schema](../how-to/publish-json-schema.md)) and a
+> committed, drift-checked schema artifact
+> (`Tests/Functional/Schema/Fixtures/content-blocks.schema.json`).
+> Phase 3 remains open. This is a historical design record; where wording
+> differs from the code, **the code wins** — notably the implementation
+> emits **draft-07** with `definitions` (instead of the 2020-12/`$defs`
+> sketch below) for the widest tool support, and the phase 2 endpoint is
+> gated by the **extension configuration** (`schemaEndpoint.enable`,
+> off by default) rather than by an application context.
 
 Date: 2026-09-05
 Scope: potential new `SchemaGenerator` + CLI command / HTTP endpoint; no change
