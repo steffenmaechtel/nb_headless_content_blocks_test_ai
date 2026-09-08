@@ -1,12 +1,17 @@
 # Design: Automatically generate JSON Schema
 
-> Status: **PHASE 1 IMPLEMENTED (2026-09-05)** — `JsonSchemaGenerator`,
-> the `nbheadlesscontentblocks:generate-schema` command and the schema
-> contract tests are shipped (issue #22). Phases 2–3 remain open. This is
-> a historical design record; where wording differs from the code, **the
-> code wins** — notably the implementation emits **draft-07** with
+> Status: **PHASE 1 + PHASE 2 IMPLEMENTED (2026-09-08)** —
+> `JsonSchemaGenerator`, the `nbheadlesscontentblocks:generate-schema`
+> command and the schema contract tests are shipped (issue #22, phase 1);
+> phase 2 delivers the combined schema to consumers via a live HTTP
+> endpoint (`SchemaEndpointMiddleware`, gated by application context and an
+> optional per-site token) and a publishing how-to. Phase 3 remains open.
+> This is a historical design record; where wording differs from the code,
+> **the code wins** — notably the implementation emits **draft-07** with
 > `definitions` (instead of the 2020-12/`$defs` sketch below) for the
-> widest tool support.
+> widest tool support, and phase 2 was implemented as a **middleware**
+> (not a page type) because it needs full control over status codes,
+> cache headers and gating.
 
 Date: 2026-09-05
 Scope: potential new `SchemaGenerator` + CLI command / HTTP endpoint; no change
@@ -142,10 +147,28 @@ reduction) would live in `$defs` — the schema twin of the contract page.
 
 ### Phase 2 — delivery to consumers
 
-- Publish the generated files (commit them, or copy them in CI into the
-  frontend repo / static file server) with stable `$id` URLs.
-- Optional: HTTP endpoint (page type or middleware) serving the combined
-  schema, restricted to non-production or authenticated consumers.
+Implemented as a **frontend middleware** (`SchemaEndpointMiddleware`,
+registered in `Configuration/RequestMiddlewares.php`) that serves the
+combined schema at a stable URL (`/api/schema/content-blocks.json`,
+configurable per site):
+
+- **Gating**: public outside the production context; a configured per-site
+  token (`nbHeadlessContentBlocks.schemaApi.token`) is always required and
+  disables the endpoint in production when absent. Missing/wrong tokens
+  return `404` so the route is indistinguishable from an unregistered one.
+- **Caching**: `Cache-Control: public, max-age=86400` for public responses,
+  `private, no-store` for token-protected ones; only `GET`/`HEAD` allowed.
+- **Configuration**: per-site site settings (`enabled`, `path`, `idBase`,
+  `token`), with defaults shipped in the Site Set's `settings.yaml`.
+- **Publishing**: `docs/how-to/publish-json-schema.md` covers the endpoint
+  and the static-file alternative (commit or copy in CI to a static host
+  with stable `$id` URLs).
+
+Why a middleware instead of a page type: gating (context + token), cache
+headers and the `404`-on-rejection behaviour need full control over status
+and headers, which a `PAGE`-type `USER` object cannot provide cleanly and
+identically across TYPO3 13/14. The middleware short-circuits before page
+resolution, so the URL needs no page or `typeNum`.
 
 ### Phase 3 — TypoScript-aware refinements (experimental)
 
@@ -197,5 +220,6 @@ reduction) would live in `$defs` — the schema twin of the contract page.
 
 Proceed with **phase 1** as a standalone proof: it is cheap, touches no
 runtime code, hardens our own contract via CI, and gives the frontend team
-generated types immediately. Decide on phase 2/3 after the first real-world
-feedback. Track in issue #22.
+generated types immediately. **Phase 2** (endpoint + publishing how-to) is
+shipped; decide on phase 3 (TypoScript-aware refinements) after the first
+real-world feedback. Track in issue #22.

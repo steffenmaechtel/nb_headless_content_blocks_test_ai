@@ -56,6 +56,11 @@ services:
 
   Netzbewegung\NbHeadlessContentBlocks\Schema\JsonSchemaGenerator: ~
 
+  # Public so the frontend middleware dispatcher (GeneralUtility::makeInstance)
+  # resolves it through the container with its injected dependencies.
+  Netzbewegung\NbHeadlessContentBlocks\Middleware\SchemaEndpointMiddleware:
+    public: true
+
   Netzbewegung\NbHeadlessContentBlocks\Command\GenerateSchemaCommand:
     tags:
       - name: 'console.command'

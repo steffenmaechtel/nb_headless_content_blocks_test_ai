@@ -25,7 +25,10 @@ Classes/
 │   ├── ContentBlocksJsonDataProcessor.php    # Main processor for Content Blocks
 │   └── ContainerJsonDataProcessor.php        # Processor for EXT:container
 ├── Schema/
-│   └── JsonSchemaGenerator.php               # Content Block definitions -> JSON Schema (draft-07)
+│   ├── JsonSchemaGenerator.php               # Content Block definitions -> JSON Schema (draft-07)
+│   └── SchemaApiAccess.php                   # endpoint gating: token / production context
+├── Middleware/
+│   └── SchemaEndpointMiddleware.php          # serves content-blocks.schema.json at a stable URL
 ├── FieldTransformer/
 │   ├── FieldValueTransformerChain.php
 │   ├── FieldValueTransformerInterface.php
@@ -51,11 +54,13 @@ Classes/
     └── ModifyArrayRecursiveToArrayEvent.php  # PSR-14 Event (deprecated, still fired)
 
 Configuration/
+├── RequestMiddlewares.php                    # registers the schema endpoint middleware
 ├── Services.yaml                             # tagged services: nb_headless.normalizer,
 │                                             # nb_headless.field_value_transformer
 └── Sets/HeadlessContentBlock/
     ├── setup.typoscript
-    └── config.yaml
+    ├── config.yaml
+    └── settings.yaml                         # schemaApi defaults (enabled/path/idBase/token)
 
 docs/
 ├── README.md                                 # documentation index (Diátaxis)
