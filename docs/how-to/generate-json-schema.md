@@ -64,6 +64,14 @@ fixtures against the generated schemas
 (`Tests/Functional/Schema/JsonSchemaContractTest.php`) — if the JSON
 output and the generated schema drift apart, the build fails.
 
+## Serving the schemas
+
+Instead of running the command yourself, the combined schema can also be
+served live by the extension's HTTP endpoint at
+`/api/schema/content-blocks.json` (gated by application context and an
+optional per-site token). See [Publish JSON Schema](publish-json-schema.md)
+for both delivery options, per-site configuration and URL strategy.
+
 Background, benefits and the phased plan:
 [JSON Schema generation](../design/json_schema_generation.md) (design
 record).

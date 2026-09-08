@@ -1,0 +1,6 @@
+nbHeadlessContentBlocks:
+  schemaApi:
+    enabled: true
+    path: /api/schema/content-blocks.json
+    idBase: ''
+    token: ''
